@@ -1,0 +1,36 @@
+[package]
+name = "artwait"
+version = "0.2.0"
+description = "ArtWait companion desktop application"
+authors = ["ArtWait Contributors"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4.0", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+sha2 = "0.10"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
+hex = "0.4"
+tempfile = "3.8"
+tauri-plugin-opener = "2.5.4"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+cli-only = []
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

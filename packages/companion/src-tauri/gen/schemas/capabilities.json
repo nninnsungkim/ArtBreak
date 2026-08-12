@@ -1,0 +1,1 @@
+{"artwork-window":{"identifier":"artwork-window","description":"Allows the artwork window to open only the current Metropolitan Museum object page.","local":true,"windows":["main"],"permissions":[{"identifier":"opener:allow-open-url","allow":[{"url":"https://www.metmuseum.org/art/collection/search/*"}]}]}}

@@ -1,0 +1,64 @@
+name: Build platform VSIX packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  package:
+    env:
+      ARTWAIT_MACOS_SIGNING_IDENTITY: ${{ secrets.ARTWAIT_MACOS_SIGNING_IDENTITY }}
+      ARTWAIT_APPLE_ID: ${{ secrets.ARTWAIT_APPLE_ID }}
+      ARTWAIT_APPLE_APP_PASSWORD: ${{ secrets.ARTWAIT_APPLE_APP_PASSWORD }}
+      ARTWAIT_APPLE_TEAM_ID: ${{ secrets.ARTWAIT_APPLE_TEAM_ID }}
+      ARTWAIT_MACOS_CERTIFICATE_BASE64: ${{ secrets.ARTWAIT_MACOS_CERTIFICATE_BASE64 }}
+      ARTWAIT_MACOS_CERTIFICATE_PASSWORD: ${{ secrets.ARTWAIT_MACOS_CERTIFICATE_PASSWORD }}
+      ARTWAIT_MACOS_KEYCHAIN_PASSWORD: ${{ secrets.ARTWAIT_MACOS_KEYCHAIN_PASSWORD }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: win32-x64
+          - runner: macos-13
+            target: darwin-x64
+          - runner: macos-14
+            target: darwin-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm ci
+      - name: Import macOS Developer ID certificate
+        if: ${{ startsWith(matrix.target, 'darwin-') && env.ARTWAIT_MACOS_CERTIFICATE_BASE64 != '' }}
+        env:
+          CERTIFICATE_BASE64: ${{ env.ARTWAIT_MACOS_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ env.ARTWAIT_MACOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ env.ARTWAIT_MACOS_KEYCHAIN_PASSWORD }}
+        shell: bash
+        run: |
+          certificate_path="$RUNNER_TEMP/artwait-developer-id.p12"
+          keychain_path="$RUNNER_TEMP/artwait-signing.keychain-db"
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode > "$certificate_path"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
+          security import "$certificate_path" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_path"
+          security list-keychain -d user -s "$keychain_path"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$keychain_path"
+      - run: npm run typecheck --workspace artwait-vscode
+      - run: npm run lint --workspace artwait-vscode
+      - run: npm run test:run --workspace artwait-vscode
+      - run: cargo test
+        working-directory: packages/companion/src-tauri
+      - run: npm run package:vsix --workspace artwait-vscode -- ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artwait-${{ matrix.target }}
+          path: packages/vscode-extension/*.vsix

@@ -1,0 +1,17 @@
+.vscode/**
+.vscode-test/**
+src/**
+test/**
+out/test/**
+*.map
+.gitignore
+tsconfig.json
+tsconfig.test.json
+.eslintrc.json
+run-tests.mjs
+**/*.test.js
+node_modules/**
+scripts/**
+
+# Platform-specific ArtWait binaries under bin/ are runtime dependencies and
+# intentionally remain in each Marketplace package.

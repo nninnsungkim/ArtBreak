@@ -1,0 +1,94 @@
+{
+  "name": "artwait-vscode",
+  "displayName": "ArtWait",
+  "description": "A work of art for the moments your AI is thinking.",
+  "version": "0.2.0",
+  "publisher": "artwait",
+  "license": "MIT",
+  "icon": "media/artwait-icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "art",
+    "museum",
+    "met",
+    "painting",
+    "claude",
+    "codex",
+    "focus",
+    "wait"
+  ],
+  "galleryBanner": {
+    "color": "#0e0e0e",
+    "theme": "dark"
+  },
+  "extensionKind": [
+    "ui"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "artwait.pause",
+        "title": "ArtWait: Pause..."
+      },
+      {
+        "command": "artwait.resume",
+        "title": "ArtWait: Resume"
+      },
+      {
+        "command": "artwait.testWindow",
+        "title": "ArtWait: Test Window"
+      },
+      {
+        "command": "artwait.status",
+        "title": "ArtWait: Show Status"
+      },
+      {
+        "command": "artwait.resetRuntime",
+        "title": "ArtWait: Reset Runtime State"
+      },
+      {
+        "command": "artwait.installHooks",
+        "title": "ArtWait: Install Agent Hooks"
+      },
+      {
+        "command": "artwait.removeHooks",
+        "title": "ArtWait: Remove Agent Hooks"
+      },
+      {
+        "command": "artwait.hookStatus",
+        "title": "ArtWait: Check Hook Status"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "node run-tests.mjs",
+    "test:build": "tsc -p ./tsconfig.test.json",
+    "test:run": "npm run test:build && npm run test",
+    "lint": "eslint src --ext ts",
+    "typecheck": "tsc --noEmit",
+    "package:vsix": "node ./scripts/package-vsix.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "glob": "^10.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {}
+}

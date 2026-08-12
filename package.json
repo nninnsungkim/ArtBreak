@@ -1,0 +1,24 @@
+{
+  "name": "artwait",
+  "version": "0.2.0",
+  "private": true,
+  "description": "ArtWait - Display public-domain paintings while Claude Code or Codex is working",
+  "workspaces": [
+    "packages/vscode-extension",
+    "packages/companion"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "catalog:build": "tsc -p scripts/catalog/tsconfig.json",
+    "catalog:generate": "npm run catalog:build && node dist/catalog/generate.js"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "author": "ArtWait Contributors",
+  "license": "MIT"
+}
