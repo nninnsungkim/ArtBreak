@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "publisher": "artwait",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nninnsungkim/ArtWait.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nninnsungkim/ArtWait/issues"
+  },
+  "homepage": "https://github.com/nninnsungkim/ArtWait#readme",
   "icon": "media/artwait-icon.png",
   "engines": {
     "vscode": "^1.85.0"
