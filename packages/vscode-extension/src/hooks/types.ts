@@ -140,10 +140,11 @@ export function parseCodexPayload(
  * Gets provider-appropriate neutral stdout output.
  *
  * - Claude: empty for all events
- * - Codex: empty for UserPromptSubmit and SessionEnd, {} for Stop
+ * - Codex: {} for every lifecycle event. Current Codex validates every command
+ *   hook response as JSON; empty stdout is reported as a failed hook.
  */
-export function getNeutralOutput(provider: Provider, event: LifecycleEvent): string {
-    if (provider === 'codex' && event === 'stop') {
+export function getNeutralOutput(provider: Provider, _event: LifecycleEvent): string {
+    if (provider === 'codex') {
         return '{}\n';
     }
     return '';

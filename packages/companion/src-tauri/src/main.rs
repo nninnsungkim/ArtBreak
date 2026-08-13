@@ -4,7 +4,7 @@
 use clap::{Parser, Subcommand};
 use chrono::Utc;
 use serde::Deserialize;
-use std::io::{self, Read};
+use std::io::{self, BufRead};
 use std::process::{Command, Stdio};
 use std::time::Duration;
 use std::fs::OpenOptions;
@@ -109,9 +109,33 @@ fn handle_hook(provider: &str, event: &str) {
     let now = Utc::now();
     let now_ms = now.timestamp_millis();
 
-    // Read JSON from stdin
+    // Codex invokes lifecycle commands without closing, or in some builds
+    // without supplying, stdin. A hook must answer before its two-second
+    // timeout, so use a stable per-workspace marker instead of waiting for a
+    // payload that may never arrive. The working directory distinguishes
+    // simultaneous Codex sessions in different VS Code workspaces.
+    if provider == "codex" {
+        let cwd = std::env::current_dir()
+            .ok()
+            .and_then(|path| path.to_str().map(str::to_owned));
+        let workspace_path = cwd.as_deref().unwrap_or(".");
+        const CODEX_SESSION_ID: &str = "codex-workspace";
+
+        match event {
+            "start" => handle_start_event(provider, CODEX_SESSION_ID, None, Some(workspace_path), now_ms),
+            "stop" => handle_stop_event(provider, CODEX_SESSION_ID, None, now_ms),
+            "failure" => handle_failure_event(provider, CODEX_SESSION_ID, None),
+            "session-end" => handle_session_end_event(provider, CODEX_SESSION_ID, now_ms),
+            _ => {}
+        }
+
+        print_neutral_output(provider, event);
+        return;
+    }
+
+    // Claude delivers one JSON payload on stdin.
     let mut buffer = String::new();
-    if let Err(e) = io::stdin().read_to_string(&mut buffer) {
+    if let Err(e) = io::stdin().lock().read_line(&mut buffer) {
         eprintln!("Failed to read stdin: {}", e);
         print_neutral_output(provider, event);
         return;
@@ -255,9 +279,11 @@ fn spawn_ui_async(test_mode: bool) {
     }
 }
 
-fn print_neutral_output(provider: &str, event: &str) {
-    // Codex Stop expects {} JSON
-    if provider == "codex" && event == "stop" {
+fn print_neutral_output(provider: &str, _event: &str) {
+    // Current Codex command hooks parse every lifecycle response as JSON. An
+    // empty response makes UserPromptSubmit and Stop report as failed, so keep
+    // every Codex hook response deliberately neutral but syntactically valid.
+    if provider == "codex" {
         println!("{{}}");
     }
     // All other events: empty output

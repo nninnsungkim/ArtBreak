@@ -142,16 +142,16 @@ describe('hooks/types', () => {
             assert.equal(getNeutralOutput('claude', 'session-end'), '');
         });
 
-        it('should return empty for Codex start', () => {
-            assert.equal(getNeutralOutput('codex', 'start'), '');
+        it('should return {} for Codex start', () => {
+            assert.equal(getNeutralOutput('codex', 'start'), '{}\n');
         });
 
         it('should return {} for Codex stop', () => {
             assert.equal(getNeutralOutput('codex', 'stop'), '{}\n');
         });
 
-        it('should return empty for Codex session-end', () => {
-            assert.equal(getNeutralOutput('codex', 'session-end'), '');
+        it('should return {} for Codex session-end', () => {
+            assert.equal(getNeutralOutput('codex', 'session-end'), '{}\n');
         });
     });
 });

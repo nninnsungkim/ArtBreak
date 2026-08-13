@@ -105,9 +105,9 @@ function isArtWaitCodexHook(entry: CodexHookEntry): boolean {
 }
 
 /**
- * Quotes a single executable path for the command shell used by Codex.
- * Windows paths cannot contain a double quote, but escaping preserves a
- * useful error-free command even for paths containing spaces.
+ * Quotes a single executable path for the command shell. Windows paths cannot
+ * contain a double quote, but escaping preserves a useful error-free command
+ * when a profile directory contains spaces.
  */
 function quoteCommandPath(value: string): string {
     return `"${value.replace(/"/g, '\\"')}"`;
@@ -143,7 +143,10 @@ function createCodexHookEntry(
     companionPath: string,
     event: 'start' | 'stop' | 'session-end'
 ): CodexHookEntry {
-    const command = `${quoteCommandPath(companionPath)} hook codex ${event}`;
+    // Codex's Windows command runner accepts a bare stable path but can treat
+    // unnecessary wrapping quotes as part of the executable token. Retain
+    // quotes only for the uncommon profile path that actually needs them.
+    const command = `${quoteClaudeCommandPath(companionPath)} hook codex ${event}`;
     return {
         type: 'command',
         command,

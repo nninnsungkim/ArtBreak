@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.4
+
+- Make Codex lifecycle hooks independent of stdin payload delivery. ArtWait now
+  tracks the active Codex turn by its workspace, so the two-second artwork gate
+  works with current Codex command-hook execution on Windows.
+
+## 0.2.3
+
+- Read Codex hook input as a JSON line instead of waiting for stdin to close.
+  This prevents Codex from timing out the work-start hook before ArtWait can
+  create its marker.
+
+## 0.2.2
+
+- Return valid neutral JSON from every Codex lifecycle hook. Codex now rejects
+  empty command-hook output, which previously prevented ArtWait from receiving
+  work-start events.
+
 ## 0.2.1
 
 - Activate immediately in VS Code instead of waiting for the next startup

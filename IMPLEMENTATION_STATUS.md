@@ -23,7 +23,7 @@ API key, server, LLM, or separate installer is required.
 | Stable companion path and updates | Implemented for Windows and macOS | Windows uses `%LOCALAPPDATA%\ArtWait\app\artwait.exe`; macOS installs the complete `~/.artwait/app/ArtWait.app` bundle. Both verify the embedded executable hash before a staged, rollback-safe payload swap. |
 | macOS packaging | Implemented; native CI pending | The package script builds a Tauri `ArtWait.app` bundle only on its native macOS host, signs/verifies it, embeds it in the matching VSIX, and preserves the full bundle when installing. When the configured GitHub Secrets are present, CI imports the Developer ID certificate, notarizes, and staples each bundle. The CI matrix covers `darwin-x64` and `darwin-arm64`. |
 | First-run display | Implemented and acceptance-tested | The extension schedules one immediate welcome work on its first activation. It bypasses agent hooks but respects ArtWait pause state and the normal single-window lock. A clean VS Code profile opened the artwork window automatically. |
-| Windows VSIX | Built and checked | `artwait-vscode-win32-x64-0.2.1.vsix`, 3,151,767 bytes, SHA-256 `c9b8f418108dbf8dd2962e20d227549de8b7cf2a3827610963a19359cfecfe89`. Its bundled companion SHA-256 is `f6253e59b30f5d4fead1294dfa2a51e3e5802c147110615efd35a462f2e9d7ce`. |
+| Windows VSIX | Built and checked | `artwait-vscode-win32-x64-0.2.4.vsix`, 3,151,692 bytes, SHA-256 `3c2bd4e08bd7276b228e5f92d0ee2af7ea7a309ee46f01dc83d7f25fb3003e49`. Its bundled companion SHA-256 is `17b0b206fb5afb897f59a15905c8cfad41518f9b5d6d6fd70d162acfb97b04ac`. |
 
 ## Latest local verification
 
@@ -48,10 +48,11 @@ API key, server, LLM, or separate installer is required.
 - The final 0.2.1 Windows VSIX archive has the expected `0.2.1` version, `win32-x64` target, immediate activation, and companion hash.
 - Fresh-profile acceptance: installing 0.2.1 before launching VS Code automatically opened the ArtWait window and its companion from the isolated app path.
 - Running-session acceptance: installing 0.2.1 into an already-open, otherwise empty VS Code profile also automatically opened the ArtWait window, with no reload or terminal action in that profile.
+- Version 0.2.4 passed typecheck, lint, the extension unit suite, and all four Rust tests. Its installed companion handled a real eight-second Codex task through the current Windows hook runtime: it created the workspace marker, opened a native ArtWait window after the gate, and removed the marker/window on the paired stop event.
 
 ## Release blockers still open
 
-1. The `artwait` publisher and version 0.1.8 are public. The publisher account is not authenticated in this environment, so the three 0.2.1 platform packages must be uploaded from the Publisher management page (or through an authenticated publishing credential). The previous publish attempt was rejected because the available credential is not authorized for `artwait`.
+1. The `artwait` publisher and version 0.2.1 are public. The publisher account is not authenticated in this environment, so the three 0.2.4 platform packages must be uploaded from the Publisher management page (or through an authenticated publishing credential). The previous publish attempt was rejected because the available credential is not authorized for `artwait`.
 2. Privacy and support URLs remain to be chosen for the public listing.
 3. `artwait.exe` is not Authenticode-signed or timestamped. Marketplace packaging does not require it, but signing is a recommended Windows-release safeguard before broad distribution.
 4. WebView2 prerequisite/error-path checks remain open.
@@ -69,7 +70,8 @@ fields, as required.
 
 ## Next release sequence
 
-1. Run the `Build platform VSIX packages` workflow and retrieve `win32-x64`, `darwin-x64`, and `darwin-arm64` artifacts for 0.2.1.
-2. Sign/notarize both macOS bundles with the Developer ID release credential, then upload all three platform-specific VSIX packages under version 0.2.1.
-3. Add public repository, privacy, and support URLs; decide whether to sign and timestamp the Windows executable.
-4. Perform clean-profile VS Code, real Claude, and real Codex acceptance tests on Windows and macOS.
+1. Upload the verified `win32-x64` 0.2.4 VSIX, then verify a Marketplace fresh install against both Claude Code and Codex.
+2. Run the `Build platform VSIX packages` workflow and retrieve `darwin-x64` and `darwin-arm64` artifacts for 0.2.4.
+3. Sign/notarize both macOS bundles with the Developer ID release credential, then upload the two macOS platform packages under version 0.2.4.
+4. Add public repository, privacy, and support URLs; decide whether to sign and timestamp the Windows executable.
+5. Perform clean-profile VS Code, real Claude, and real Codex acceptance tests on Windows and macOS.

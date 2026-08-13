@@ -88,8 +88,8 @@ not a public-release Mac package.
 
 ## Release status
 
-Version 0.1.8 is published on the VS Code Marketplace. Version 0.2.1 adds
-immediate first-install activation and native macOS Intel and Apple Silicon
+Version 0.2.1 is published on the VS Code Marketplace. Version 0.2.4 fixes
+the Codex lifecycle hook and adds native macOS Intel and Apple Silicon
 packages alongside Windows x64; it awaits
 the native CI builds and upload from the publisher account. A Developer ID
 signature and notarization are still required for a frictionless public macOS
