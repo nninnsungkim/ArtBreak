@@ -20,6 +20,8 @@ import {
 import { getCompanionPath, installCompanion, showCompanion } from './platform/companion';
 
 const WELCOME_ARTWORK_SHOWN_KEY = 'artwait.welcomeArtworkShown';
+const ACTIVITY_MONITOR_INTERVAL_MS = 350;
+const ACTIVITY_SHOW_RETRY_MS = 2_600;
 
 function scheduleWelcomeArtwork(context: vscode.ExtensionContext): vscode.Disposable | undefined {
     if (context.globalState.get<boolean>(WELCOME_ARTWORK_SHOWN_KEY) === true) {
@@ -40,6 +42,52 @@ function scheduleWelcomeArtwork(context: vscode.ExtensionContext): vscode.Dispos
     }, 600);
 
     return new vscode.Disposable(() => clearTimeout(timer));
+}
+
+/**
+ * Codex command hooks deliberately do only the small, synchronous part of a
+ * lifecycle transition: writing or removing an activity marker. The extension
+ * host is already running in VS Code, so it can safely launch the detached,
+ * two-second-gated ArtWait window without putting that startup cost inside the
+ * hook's short execution budget.
+ */
+function monitorActiveArtwork(context: vscode.ExtensionContext): vscode.Disposable {
+    let disposed = false;
+    let checking = false;
+    let nextShowEligibleAt = 0;
+
+    const check = async () => {
+        if (disposed || checking) return;
+        checking = true;
+
+        try {
+            const activeMarkers = await countActiveMarkers();
+            if (activeMarkers === 0) {
+                // A later agent turn should be able to show immediately.
+                nextShowEligibleAt = 0;
+                return;
+            }
+
+            if (Date.now() < nextShowEligibleAt) return;
+
+            // A show process waits for the normal two-second gate and then
+            // acquires the native single-window lock. Throttling here avoids
+            // launching several identical gate processes while it is waiting.
+            nextShowEligibleAt = Date.now() + ACTIVITY_SHOW_RETRY_MS;
+            showCompanion(context.extensionPath);
+        } catch (error) {
+            console.error('ArtWait could not check active agent work', error);
+        } finally {
+            checking = false;
+        }
+    };
+
+    const timer = setInterval(() => void check(), ACTIVITY_MONITOR_INTERVAL_MS);
+    void check();
+    return new vscode.Disposable(() => {
+        disposed = true;
+        clearInterval(timer);
+    });
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -64,6 +112,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await startLease();
 
     const welcomeArtwork = scheduleWelcomeArtwork(context);
+    const activeArtworkMonitor = monitorActiveArtwork(context);
 
     // ArtWait is ready to use immediately after installation. Keep both agent
     // integrations current as part of activation instead of requiring a
@@ -308,6 +357,7 @@ export async function activate(context: vscode.ExtensionContext) {
     if (welcomeArtwork) {
         context.subscriptions.push(welcomeArtwork);
     }
+    context.subscriptions.push(activeArtworkMonitor);
 }
 
 export async function deactivate() {

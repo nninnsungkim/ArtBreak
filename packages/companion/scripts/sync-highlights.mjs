@@ -37,7 +37,7 @@ catalog.highlightSelection = {
     availableCount: highlightObjectIDs.length,
 };
 catalog.highlightObjectIDs = highlightObjectIDs;
-catalog.selection = 'A 10,000-work Met catalog with a default subset of official Met Highlights, plus a full Explore mode.';
+catalog.selection = 'A 5,000-painting Met catalog with a default Famous subset of official Met Highlights, plus a full Explore mode.';
 catalog.sourceCounts = {
     ...(catalog.sourceCounts || {}),
     metHighlights: highlightObjectIDs.length,

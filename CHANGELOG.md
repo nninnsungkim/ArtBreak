@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.5
+
+- Make Codex work-start hooks marker-only and let the active VS Code extension
+  launch the gated artwork window. This keeps the hook inside Codex's short
+  command budget while preserving the normal two-second display rule.
+- Restrict both artwork collections to paintings. Rename the Met-curated
+  `Highlights` collection to `Famous`; `Explore` now contains 5,000 paintings.
+
 ## 0.2.4
 
 - Make Codex lifecycle hooks independent of stdin payload delivery. ArtWait now

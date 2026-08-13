@@ -9,7 +9,7 @@
 const ZOOM_MIN_SCALE = 0.01;
 const ZOOM_MAX_SCALE = 32;
 const ZOOM_KEY_STEP = 1.15;
-const COLLECTION_MODE_HIGHLIGHTS = 'highlights';
+const COLLECTION_MODE_FAMOUS = 'famous';
 const COLLECTION_MODE_EXPLORE = 'explore';
 
 function shuffle(array) {
@@ -24,6 +24,12 @@ function shuffle(array) {
 function namedArtist(value) {
     const artist = value?.trim();
     return artist && !/^unknown\b/i.test(artist) ? artist : null;
+}
+
+function isPainting(artwork) {
+    const classification = artwork?.classification?.trim().toLowerCase();
+    const objectName = artwork?.objectName?.trim().toLowerCase();
+    return classification === 'paintings' || objectName === 'painting';
 }
 
 function artworkFacts(artwork) {
@@ -45,8 +51,8 @@ function setOptionalText(element, value) {
 
 let catalog = [];
 let fullCatalog = [];
-let highlightObjectIDs = new Set();
-let collectionMode = COLLECTION_MODE_HIGHLIGHTS;
+let famousObjectIDs = new Set();
+let collectionMode = COLLECTION_MODE_FAMOUS;
 let deck = [];
 let history = [];
 let cursor = -1;
@@ -114,21 +120,21 @@ function previous() {
 }
 
 function catalogForCollectionMode(mode) {
-    if (mode === COLLECTION_MODE_HIGHLIGHTS) {
-        const highlights = fullCatalog.filter(artwork => highlightObjectIDs.has(artwork.objectID));
-        if (highlights.length > 0) return highlights;
+    if (mode === COLLECTION_MODE_FAMOUS) {
+        const famous = fullCatalog.filter(artwork => famousObjectIDs.has(artwork.objectID));
+        if (famous.length > 0) return famous;
     }
     return fullCatalog;
 }
 
 function updateCollectionModeControls() {
-    const highlightsButton = document.getElementById('highlights-mode-btn');
+    const famousButton = document.getElementById('famous-mode-btn');
     const exploreButton = document.getElementById('explore-mode-btn');
-    if (!highlightsButton || !exploreButton) return;
+    if (!famousButton || !exploreButton) return;
 
-    const showingHighlights = collectionMode === COLLECTION_MODE_HIGHLIGHTS;
-    highlightsButton.setAttribute('aria-pressed', String(showingHighlights));
-    exploreButton.setAttribute('aria-pressed', String(!showingHighlights));
+    const showingFamous = collectionMode === COLLECTION_MODE_FAMOUS;
+    famousButton.setAttribute('aria-pressed', String(showingFamous));
+    exploreButton.setAttribute('aria-pressed', String(!showingFamous));
 }
 
 function startNavigator(artworks) {
@@ -140,7 +146,7 @@ function startNavigator(artworks) {
 }
 
 function setCollectionMode(mode) {
-    if (mode !== COLLECTION_MODE_HIGHLIGHTS && mode !== COLLECTION_MODE_EXPLORE) return false;
+    if (mode !== COLLECTION_MODE_FAMOUS && mode !== COLLECTION_MODE_EXPLORE) return false;
 
     const nextCatalog = catalogForCollectionMode(mode);
     if (nextCatalog.length === 0) return false;
@@ -152,18 +158,20 @@ function setCollectionMode(mode) {
 }
 
 function initNavigator(artworks, highlights) {
-    fullCatalog = artworks.filter(artwork => namedArtist(artwork.artist) && artwork.title?.trim() && artwork.imageUrl);
+    fullCatalog = artworks.filter(artwork =>
+        namedArtist(artwork.artist) && artwork.title?.trim() && artwork.imageUrl && isPainting(artwork)
+    );
     if (fullCatalog.length === 0) throw new Error('Catalog has no displayable artworks');
 
     const availableObjectIDs = new Set(fullCatalog.map(artwork => artwork.objectID));
-    highlightObjectIDs = new Set((Array.isArray(highlights) ? highlights : [])
+    famousObjectIDs = new Set((Array.isArray(highlights) ? highlights : [])
         .filter(objectID => Number.isSafeInteger(objectID) && availableObjectIDs.has(objectID)));
 
-    // Prefer The Met's own selection of popular and important works. If a
-    // future bundled catalog has no matching IDs, keep the gallery usable by
-    // falling back to the complete Explore collection.
-    const initialMode = highlightObjectIDs.size > 0
-        ? COLLECTION_MODE_HIGHLIGHTS
+    // Famous is The Met's own selection of popular and important paintings.
+    // If a future bundled catalog has no matching IDs, keep the gallery usable
+    // by falling back to the complete Explore collection.
+    const initialMode = famousObjectIDs.size > 0
+        ? COLLECTION_MODE_FAMOUS
         : COLLECTION_MODE_EXPLORE;
     setCollectionMode(initialMode);
 }
@@ -473,7 +481,7 @@ async function loadCatalog() {
 document.addEventListener('DOMContentLoaded', async () => {
     const prevButton = document.getElementById('prev-btn');
     const nextButton = document.getElementById('next-btn');
-    const highlightsModeButton = document.getElementById('highlights-mode-btn');
+    const famousModeButton = document.getElementById('famous-mode-btn');
     const exploreModeButton = document.getElementById('explore-mode-btn');
     const artworkImage = document.getElementById('artwork-image');
     const zoomViewport = document.getElementById('zoom-viewport');
@@ -502,8 +510,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         await updateArtwork();
     });
     nextButton.addEventListener('click', advance);
-    highlightsModeButton.addEventListener('click', async () => {
-        if (setCollectionMode(COLLECTION_MODE_HIGHLIGHTS)) await updateArtwork();
+    famousModeButton.addEventListener('click', async () => {
+        if (setCollectionMode(COLLECTION_MODE_FAMOUS)) await updateArtwork();
     });
     exploreModeButton.addEventListener('click', async () => {
         if (setCollectionMode(COLLECTION_MODE_EXPLORE)) await updateArtwork();

@@ -28,9 +28,9 @@ workspaces remain unsupported because the artwork window must open locally.
    through `/hooks` only if you want artwork to appear while a Codex task runs.
 
 The welcome work opens immediately. After two seconds of active agent work,
-ArtWait opens at random in **Highlights**, a
-selection of popular and important works designated by The Met; switch to
-**Explore** for the full 10,000-work collection. It is inactive in remote
+ArtWait opens at random in **Famous**, a
+selection of popular and important paintings designated by The Met; switch to
+**Explore** for the full 5,000-painting collection. It is inactive in remote
 workspaces.
 
 ## Artwork controls
@@ -45,7 +45,7 @@ workspaces.
   main view to dismiss ArtWait for the current idle cycle.
 - Select **View at The Met** to open the collection page in the default browser.
 
-Highlights and Explore are both shuffled and avoid immediate repeats. ArtWait
+Famous and Explore are both shuffled and avoid immediate repeats. ArtWait
 shows collection facts from the source; it does not generate artwork commentary
 with an LLM.
 
@@ -88,8 +88,8 @@ not a public-release Mac package.
 
 ## Release status
 
-Version 0.2.1 is published on the VS Code Marketplace. Version 0.2.4 fixes
-the Codex lifecycle hook and adds native macOS Intel and Apple Silicon
+Version 0.2.1 is published on the VS Code Marketplace. Version 0.2.5 fixes
+the Codex work-start path and adds native macOS Intel and Apple Silicon
 packages alongside Windows x64; it awaits
 the native CI builds and upload from the publisher account. A Developer ID
 signature and notarization are still required for a frictionless public macOS

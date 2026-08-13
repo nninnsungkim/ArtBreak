@@ -5,7 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { Readable } from 'node:stream';
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const targetCount = 10_000;
+// The Met's current Open Access export contains 5,595 works that satisfy all
+// of ArtWait's display requirements *and* are classified as paintings. Keep a
+// comfortably large, reproducible subset rather than mixing in other media
+// merely to reach the former 10,000-work target.
+const targetCount = 5_000;
 const metImageHost = 'images.metmuseum.org';
 const openAccessCsv = 'https://huggingface.co/datasets/metmuseum/openaccess/resolve/main/openaccess.csv.gz?download=true';
 
@@ -21,6 +25,12 @@ function hasAllowedImage(value) {
     } catch {
         return false;
     }
+}
+
+function isPainting(row) {
+    const classification = row.classification?.trim().toLowerCase();
+    const objectName = row.objectName?.trim().toLowerCase();
+    return classification === 'paintings' || objectName === 'painting';
 }
 
 function parseCsvRecord(record) {
@@ -75,7 +85,8 @@ function compactTags(value) {
 
 function normalizeObject(row) {
     const artist = namedArtist(row.artistDisplayName);
-    if (row.isPublicDomain.toLowerCase() !== 'true' || !row.title?.trim() || !artist || !hasAllowedImage(row.primaryImageSmall)) {
+    if (row.isPublicDomain.toLowerCase() !== 'true' || !row.title?.trim() || !artist ||
+        !hasAllowedImage(row.primaryImageSmall) || !isPainting(row)) {
         return null;
     }
 
@@ -213,7 +224,7 @@ await writeFile(
     `${JSON.stringify({
         schemaVersion: 2,
         source: 'The Metropolitan Museum of Art Open Access CSV',
-        selection: 'The 10,000-work Met spotlight index first, supplemented by named public-domain Timeline Works and paintings, sculptures, and works on paper.',
+        selection: 'The 5,000-work Met painting catalog: spotlight works first, supplemented by named public-domain paintings.',
         artworkCount: targetCount,
         sourceCounts: {
             spotlightIndex: spotlightWorks.length,
@@ -224,4 +235,4 @@ await writeFile(
     'utf8'
 );
 
-console.log(`Wrote ${artworks.length} eligible Met spotlight artworks from ${rowsRead} CSV rows.`);
+console.log(`Wrote ${artworks.length} eligible Met paintings from ${rowsRead} CSV rows.`);

@@ -1,6 +1,6 @@
 {
   "productName": "ArtWait",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "identifier": "com.artwait.app",
   "build": {
     "beforeDevCommand": "node ../scripts/sync-catalog.mjs",

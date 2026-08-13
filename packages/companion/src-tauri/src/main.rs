@@ -207,8 +207,13 @@ fn handle_start_event(
         return;
     }
 
-    // 7. Spawn UI (with 2-second gate)
-    spawn_ui_async(false);
+    // 7. Claude starts the detached UI itself. Codex hooks must return as
+    // quickly as possible: the activated VS Code extension observes this
+    // marker and launches the same gated UI on its behalf. This avoids making
+    // Codex treat a valid start event as a timed-out command hook on Windows.
+    if provider != "codex" {
+        spawn_ui_async(false);
+    }
 }
 
 fn handle_stop_event(provider: &str, session_id: &str, turn_id: Option<&str>, now_ms: i64) {
