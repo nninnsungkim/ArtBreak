@@ -92,12 +92,12 @@ not a public-release Mac package.
 
 ## Release status
 
-Version 0.2.4 is published on the VS Code Marketplace. Version 0.2.6 fixes
-the Codex work-start path and adds native macOS Intel and Apple Silicon
-packages alongside Windows x64; it awaits
-the native CI builds and upload from the publisher account. A Developer ID
-signature and notarization are still required for a frictionless public macOS
-release. See
+Version 0.2.4 is published on the VS Code Marketplace. Version 0.2.7 fixes
+the Codex work-start path, a reliable-activation regression, the Test Window
+single-instance lock, and adds native macOS Intel and Apple Silicon packages
+alongside Windows x64; it awaits the native CI builds and upload from the
+publisher account. A Developer ID signature and notarization are still
+required for a frictionless public macOS release. See
 [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) for the full audit.
 
 ## License

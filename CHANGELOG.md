@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.7
+
+- Fix garbled Codex status text in `ArtWait: Check Hook Status`.
+- Fix `ArtWait: Test Window` bypassing the single-instance lock: it could
+  open a second visible window while an agent-triggered window was already
+  showing, or leave the lock held after closing and block a real
+  agent-triggered window for up to 60 seconds. Test Window now shares the
+  same lock as agent-triggered windows.
+- Expand `ArtWait: Pause...` with 30 minutes, 1–8 hour presets, and a "Rest
+  of today" option that ends at local midnight rather than a flat 24 hours
+  later. `ArtWait: Show Status` now shows the exact time a fixed pause ends
+  instead of just its mode.
+- Remove duplicate/unused UI build artifacts (`app.js`, `app-v3.js`,
+  `styles.css`, the unused `ui/paintings.json` copy) and the superseded
+  Node hook handler, which the native companion binary replaced.
+- Fix `packages/companion/tsconfig.json` pointing at a source directory that
+  never contained TypeScript files.
+
 ## 0.2.6
 
 - Revert an attempt to replace global `*` activation with `onStartupFinished`.

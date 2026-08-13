@@ -17,13 +17,13 @@ API key, server, LLM, or separate installer is required.
 | Runtime state, leases, markers, pause and dismissal | Implemented | Extension unit suite passes. |
 | Claude Code and Codex hook installer | Implemented | Both integrations are registered automatically at extension activation. Selective merge, changed-only backup, removal, and neutral output are implemented. Claude lifecycle was exercised against a real local session previously; current hook smoke test passed. |
 | Tauri companion | Implemented | Rust CLI supports `hook`, `show`, and `control`; `cargo test` passes (4 tests). |
-| Two-second gate and single visible window | Implemented | Hook smoke used a fresh VS Code lease and created a UI only after the gate. `ui.lock` protects the window and is now removed before automatic exit. |
+| Two-second gate and single visible window | Implemented | Hook smoke used a fresh VS Code lease and created a UI only after the gate. `ui.lock` protects the window and is now removed before automatic exit. `Test Window` previously bypassed this lock entirely (could open a second window, or leave the lock held after closing); it now acquires and releases the same lock as agent-triggered windows. |
 | Artwork catalog and navigation | Implemented | The bundled catalog contains 5,000 displayable Met paintings and zero `Unknown` artists. It starts at random in 227 official Met `Famous` paintings, with an in-window Explore control for the full painting catalog. Both collections use shuffled deck/history navigation. |
 | Artwork UI | Implemented | Responsive image fit, work/artist/source fields, Famous/Explore controls, The Met link, previous/next navigation, magnifier affordance, continuous pointer-anchored Ctrl/Command zoom, modifier-drag zoom, and direct click-and-drag panning. Wheel/trackpad zoom sensitivity is one third of the previous setting. |
 | Stable companion path and updates | Implemented for Windows and macOS | Windows uses `%LOCALAPPDATA%\ArtWait\app\artwait.exe`; macOS installs the complete `~/.artwait/app/ArtWait.app` bundle. Both verify the embedded executable hash before a staged, rollback-safe payload swap. |
 | macOS packaging | Implemented; native CI pending | The package script builds a Tauri `ArtWait.app` bundle only on its native macOS host, signs/verifies it, embeds it in the matching VSIX, and preserves the full bundle when installing. When the configured GitHub Secrets are present, CI imports the Developer ID certificate, notarizes, and staples each bundle. The CI matrix covers `darwin-x64` and `darwin-arm64`. |
 | First-run display | Implemented and acceptance-tested | The extension schedules one immediate welcome work on its first activation. It bypasses agent hooks but respects ArtWait pause state and the normal single-window lock. A clean VS Code profile opened the artwork window automatically. |
-| Windows VSIX | Stale, needs repackaging | The last built archive, `artwait-vscode-win32-x64-0.2.6.vsix` (2,749,280 bytes, SHA-256 `42a7d79627affcc7dc2f463f92703d50602da7dd37af6269317d7b39784a52d3`), activated with `onStartupFinished`. That event does not re-fire for an extension installed or updated while VS Code is already running, so ArtWait would not write its lease or reinstall hooks until the next restart. Activation is reverted to `*`; this archive must be rebuilt before upload. |
+| Windows VSIX | Built and checked | `artwait-vscode-win32-x64-0.2.7.vsix`, 2,711,119 bytes, SHA-256 `8242525c093a9b8a19201302193ac17cdf2ead59d88e13efc79efe358979a87c`. Its manifest activates with `*`. Packaging also fixed a `.vscodeignore` gap that let a stale `tsc -p ./tsconfig.test.json` output tree (`out/src/**`) leak into earlier local packages; this archive has no such duplicate files (32 files, 2.59 MB unpacked, vs. 56 files before the fix). |
 
 ## Latest local verification
 
@@ -49,10 +49,11 @@ API key, server, LLM, or separate installer is required.
 - Fresh-profile acceptance: installing 0.2.1 before launching VS Code automatically opened the ArtWait window and its companion from the isolated app path.
 - Running-session acceptance: installing 0.2.1 into an already-open, otherwise empty VS Code profile also automatically opened the ArtWait window, with no reload or terminal action in that profile.
 - Version 0.2.5 passed typecheck, lint, the extension unit suite, companion catalog tests, and all four Rust tests. Its clean-profile Codex run registered `UserPromptSubmit Completed` and `Stop Completed`; the extension installed the stable companion and hooks automatically. Codex work-start now writes its marker synchronously, while the active VS Code extension opens the gated window.
+- Version 0.2.7 passed `tsc --noEmit` for both packages, the extension unit suite (including new `pauseUntilEndOfDay` tests), `cargo check`, and `cargo test` (4 passed). Its packaged VSIX was rebuilt after fixing a `.vscodeignore` gap and verified to contain no stale `out/src/**` duplicate files.
 
 ## Release blockers still open
 
-1. The `artwait` publisher and version 0.2.4 are public. The publisher account is not authenticated in this environment, so the 0.2.6 Windows VSIX must be uploaded from the Publisher management page (or through an authenticated publishing credential). The archive referenced above predates the `*` activation revert and must be rebuilt with `npm run package:vsix --workspace=artwait-vscode` before upload.
+1. The `artwait` publisher and version 0.2.4 are public. The publisher account is not authenticated in this environment, so the 0.2.7 Windows VSIX must be uploaded from the Publisher management page (or through an authenticated publishing credential).
 2. Privacy and support URLs remain to be chosen for the public listing.
 3. `artwait.exe` is not Authenticode-signed or timestamped. Marketplace packaging does not require it, but signing is a recommended Windows-release safeguard before broad distribution.
 4. WebView2 prerequisite/error-path checks remain open.
@@ -70,8 +71,8 @@ fields, as required.
 
 ## Next release sequence
 
-1. Upload the verified `win32-x64` 0.2.6 VSIX, then verify a Marketplace fresh install against both Claude Code and Codex.
-2. Run the `Build platform VSIX packages` workflow and retrieve `darwin-x64` and `darwin-arm64` artifacts for 0.2.6.
-3. Sign/notarize both macOS bundles with the Developer ID release credential, then upload the two macOS platform packages under version 0.2.6.
+1. Upload the verified `win32-x64` 0.2.7 VSIX, then verify a Marketplace fresh install against both Claude Code and Codex.
+2. Run the `Build platform VSIX packages` workflow and retrieve `darwin-x64` and `darwin-arm64` artifacts for 0.2.7.
+3. Sign/notarize both macOS bundles with the Developer ID release credential, then upload the two macOS platform packages under version 0.2.7.
 4. Add public repository, privacy, and support URLs; decide whether to sign and timestamp the Windows executable.
 5. Perform clean-profile VS Code, real Claude, and real Codex acceptance tests on Windows and macOS.
