@@ -346,8 +346,12 @@ fn handle_show(test: bool, reason: Option<String>) {
         }
     }
 
-    let ui_lock = if test { None } else { acquire_ui_lock() };
-    if !test && ui_lock.is_none() {
+    // The single-instance lock applies even in test mode: only the gate and
+    // marker/pause checks above it are test-exempt, so a manual Test Window
+    // can never coexist with an already-visible agent-triggered (or other
+    // test) window.
+    let ui_lock = acquire_ui_lock();
+    if ui_lock.is_none() {
         println!("ArtWait is already visible");
         return;
     }
@@ -394,11 +398,15 @@ fn handle_show(test: bool, reason: Option<String>) {
                 Ok(())
             })
             .on_window_event(move |_window, event| {
-                if !test && matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+                if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+                    // Release the single-instance lock regardless of test mode:
+                    // a Test Window now holds it too, and leaving it held would
+                    // block real agent-triggered windows for up to the 60-second
+                    // staleness window after every manual test.
                     if let Some(path) = &ui_lock_for_close {
                         let _ = std::fs::remove_file(path);
                     }
-                    if marker::count_active_markers(Utc::now().timestamp_millis()).unwrap_or(0) > 0 {
+                    if !test && marker::count_active_markers(Utc::now().timestamp_millis()).unwrap_or(0) > 0 {
                         let _ = dismiss::write_dismiss_state(Utc::now().timestamp_millis());
                     }
                 }

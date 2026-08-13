@@ -117,6 +117,29 @@ export async function pauseIndefinitely(): Promise<void> {
 }
 
 /**
+ * Creates a pause state that expires at local midnight (the start of
+ * tomorrow), so "rest of today" behaves the same near midnight as it does at
+ * noon instead of always adding a flat 24 hours.
+ */
+export async function pauseUntilEndOfDay(now: number = Date.now()): Promise<void> {
+    const endOfDay = new Date(now);
+    endOfDay.setHours(24, 0, 0, 0);
+    const expiresAt = endOfDay.getTime();
+
+    const state: PauseState = {
+        schemaVersion: 1,
+        mode: {
+            type: 'fixed',
+            durationHours: (expiresAt - now) / (60 * 60 * 1000),
+            expiresAt,
+        },
+        createdAt: now,
+    };
+
+    await writePauseState(state);
+}
+
+/**
  * Creates a pause state for current VS Code leases.
  */
 export async function pauseForCurrentLeases(leaseIds: string[]): Promise<void> {

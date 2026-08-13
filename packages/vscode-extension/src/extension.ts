@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { startLease, stopLease } from './lifecycle';
 import {
     pauseForHours,
+    pauseUntilEndOfDay,
     pauseIndefinitely,
     pauseForCurrentLeases,
     removePauseState,
@@ -137,11 +138,16 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register pause command
     const pauseCommand = vscode.commands.registerCommand('artwait.pause', async () => {
         const choice = await vscode.window.showQuickPick([
+            { label: '30 minutes', value: 0.5 },
             { label: '1 hour', value: 1 },
             { label: '2 hours', value: 2 },
+            { label: '3 hours', value: 3 },
             { label: '4 hours', value: 4 },
+            { label: '5 hours', value: 5 },
+            { label: '6 hours', value: 6 },
+            { label: '7 hours', value: 7 },
             { label: '8 hours', value: 8 },
-            { label: '24 hours', value: 24 },
+            { label: 'Rest of today', value: -4 },
             { label: 'Custom...', value: -1 },
             { label: 'Until all currently open VS Code windows close', value: -2 },
             { label: 'Indefinitely', value: -3 }
@@ -184,6 +190,10 @@ export async function activate(context: vscode.ExtensionContext) {
                 // Indefinitely
                 await pauseIndefinitely();
                 vscode.window.showInformationMessage('ArtWait paused indefinitely');
+            } else if (choice.value === -4) {
+                // Rest of today
+                await pauseUntilEndOfDay();
+                vscode.window.showInformationMessage('ArtWait paused for the rest of today');
             } else {
                 // Fixed hours
                 await pauseForHours(choice.value);
@@ -223,7 +233,13 @@ export async function activate(context: vscode.ExtensionContext) {
             let statusMessage = '**ArtWait Status**\n\n';
 
             if (pauseState) {
-                statusMessage += `⏸️ **Paused** (${pauseState.mode.type})\n`;
+                if (pauseState.mode.type === 'fixed') {
+                    statusMessage += `⏸️ **Paused** until ${new Date(pauseState.mode.expiresAt).toLocaleString()}\n`;
+                } else if (pauseState.mode.type === 'current-leases') {
+                    statusMessage += '⏸️ **Paused** until all currently open VS Code windows close\n';
+                } else {
+                    statusMessage += '⏸️ **Paused** indefinitely\n';
+                }
             } else {
                 statusMessage += '▶️ **Active**\n';
             }
