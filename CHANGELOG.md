@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Activate immediately in VS Code instead of waiting for the next startup
+  lifecycle event, so a newly installed ArtWait can show its welcome work as
+  soon as VS Code loads the extension.
+
 ## 0.2.0
 
 - Add platform-specific VSIX packaging for Windows x64, macOS Intel, and
