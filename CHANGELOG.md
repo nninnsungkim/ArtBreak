@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.6
+
+- Replace global `*` activation with `onStartupFinished`, retaining automatic
+  first-run setup and artwork while avoiding the VS Code performance warning.
+
 ## 0.2.5
 
 - Make Codex work-start hooks marker-only and let the active VS Code extension

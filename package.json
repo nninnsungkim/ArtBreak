@@ -1,6 +1,6 @@
 {
   "name": "artwait",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "private": true,
   "description": "ArtWait - Display public-domain paintings while Claude Code or Codex is working",
   "workspaces": [

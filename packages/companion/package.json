@@ -1,6 +1,6 @@
 {
   "name": "artwait-companion",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "private": true,
   "description": "ArtWait companion desktop application",
   "scripts": {

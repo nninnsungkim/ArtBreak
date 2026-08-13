@@ -88,7 +88,7 @@ not a public-release Mac package.
 
 ## Release status
 
-Version 0.2.4 is published on the VS Code Marketplace. Version 0.2.5 fixes
+Version 0.2.4 is published on the VS Code Marketplace. Version 0.2.6 fixes
 the Codex work-start path and adds native macOS Intel and Apple Silicon
 packages alongside Windows x64; it awaits
 the native CI builds and upload from the publisher account. A Developer ID
