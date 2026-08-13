@@ -23,7 +23,7 @@ API key, server, LLM, or separate installer is required.
 | Stable companion path and updates | Implemented for Windows and macOS | Windows uses `%LOCALAPPDATA%\ArtWait\app\artwait.exe`; macOS installs the complete `~/.artwait/app/ArtWait.app` bundle. Both verify the embedded executable hash before a staged, rollback-safe payload swap. |
 | macOS packaging | Implemented; native CI pending | The package script builds a Tauri `ArtWait.app` bundle only on its native macOS host, signs/verifies it, embeds it in the matching VSIX, and preserves the full bundle when installing. When the configured GitHub Secrets are present, CI imports the Developer ID certificate, notarizes, and staples each bundle. The CI matrix covers `darwin-x64` and `darwin-arm64`. |
 | First-run display | Implemented and acceptance-tested | The extension schedules one immediate welcome work on its first activation. It bypasses agent hooks but respects ArtWait pause state and the normal single-window lock. A clean VS Code profile opened the artwork window automatically. |
-| Windows VSIX | Built and checked | `artwait-vscode-win32-x64-0.2.6.vsix`, 2,749,280 bytes, SHA-256 `42a7d79627affcc7dc2f463f92703d50602da7dd37af6269317d7b39784a52d3`. Its manifest activates with `onStartupFinished`, not `*`. |
+| Windows VSIX | Stale, needs repackaging | The last built archive, `artwait-vscode-win32-x64-0.2.6.vsix` (2,749,280 bytes, SHA-256 `42a7d79627affcc7dc2f463f92703d50602da7dd37af6269317d7b39784a52d3`), activated with `onStartupFinished`. That event does not re-fire for an extension installed or updated while VS Code is already running, so ArtWait would not write its lease or reinstall hooks until the next restart. Activation is reverted to `*`; this archive must be rebuilt before upload. |
 
 ## Latest local verification
 
@@ -52,7 +52,7 @@ API key, server, LLM, or separate installer is required.
 
 ## Release blockers still open
 
-1. The `artwait` publisher and version 0.2.4 are public. The publisher account is not authenticated in this environment, so the 0.2.6 Windows VSIX must be uploaded from the Publisher management page (or through an authenticated publishing credential).
+1. The `artwait` publisher and version 0.2.4 are public. The publisher account is not authenticated in this environment, so the 0.2.6 Windows VSIX must be uploaded from the Publisher management page (or through an authenticated publishing credential). The archive referenced above predates the `*` activation revert and must be rebuilt with `npm run package:vsix --workspace=artwait-vscode` before upload.
 2. Privacy and support URLs remain to be chosen for the public listing.
 3. `artwait.exe` is not Authenticode-signed or timestamped. Marketplace packaging does not require it, but signing is a recommended Windows-release safeguard before broad distribution.
 4. WebView2 prerequisite/error-path checks remain open.

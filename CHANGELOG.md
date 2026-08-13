@@ -2,8 +2,12 @@
 
 ## 0.2.6
 
-- Replace global `*` activation with `onStartupFinished`, retaining automatic
-  first-run setup and artwork while avoiding the VS Code performance warning.
+- Revert an attempt to replace global `*` activation with `onStartupFinished`.
+  That event does not re-fire for an extension installed or updated while VS
+  Code is already running, so ArtWait would not write its VS Code lease or
+  reinstall agent hooks until the next full restart — silently breaking
+  work-start artwork until then. `*` costs a VS Code performance warning but
+  is required for ArtWait to activate reliably right after install/update.
 
 ## 0.2.5
 

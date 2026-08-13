@@ -1,4 +1,4 @@
----
+  ---
 title: ArtWait - Complete Implementation Plan
 status: implementation-ready
 language: English

@@ -328,7 +328,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
             let message = '**ArtWait Hook Status**\n\n';
             message += `Claude Code: ${status.claudeInstalled ? '✓ Installed' : '✗ Not installed'}\n`;
-            message += `Codex: ${status.codexInstalled ? 'âœ“ Installed' : 'âœ— Not installed'}\n`;
+            message += `Codex: ${status.codexInstalled ? '✓ Installed' : '✗ Not installed'}\n`;
 
             if (status.claudePath) {
                 message += `\nClaude config: ${status.claudePath}`;

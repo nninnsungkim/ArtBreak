@@ -3,10 +3,19 @@
 > A quiet art break while Claude Code or Codex works.
 
 ArtWait is a VS Code extension that gives you something worth looking at while
-your agent works. On its first activation it opens a quiet native artwork
-window right away, then automatically connects to Claude Code and Codex for
-future agent-aware displays. It needs no account, API key, local server, or
-separate installer.
+your agent works. It needs no account, API key, local server, or separate
+installer.
+
+## Install
+
+1. Install ArtWait from the VS Code Marketplace (or install the supplied VSIX).
+2. **Claude Code — nothing else to do.** ArtWait opens a welcome artwork
+   immediately and installs its Claude Code hook automatically. Every later
+   Claude Code turn shows artwork after two seconds of active work.
+3. **Codex — one manual step.** ArtWait installs its Codex hook automatically
+   too, but Codex requires you to approve it once: run `/hooks` in Codex and
+   trust the ArtWait entry. Until you do, Codex turns will not show artwork
+   (the welcome artwork and Claude Code integration are unaffected).
 
 ## Current support
 
@@ -17,21 +26,16 @@ ArtWait ships platform-specific VSIX packages for local VS Code:
 - macOS Apple Silicon and Intel: the signed Tauri app bundle installs to
   `~/.artwait/app/ArtWait.app`.
 
-VS Code selects the matching Marketplace package automatically. Remote
-workspaces remain unsupported because the artwork window must open locally.
+VS Code selects the matching Marketplace package automatically. Linux and
+remote workspaces (SSH, WSL, Codespaces) are not supported; ArtWait stays
+inactive there because the artwork window must open on the local desktop.
 
-## Install and use
+## How it works
 
-1. Install ArtWait from the VS Code Marketplace (or install the supplied VSIX).
-2. The first artwork opens automatically at activation. ArtWait also installs
-   its Claude Code and Codex hooks. Codex asks you to trust its hook once
-   through `/hooks` only if you want artwork to appear while a Codex task runs.
-
-The welcome work opens immediately. After two seconds of active agent work,
-ArtWait opens at random in **Famous**, a
-selection of popular and important paintings designated by The Met; switch to
-**Explore** for the full 5,000-painting collection. It is inactive in remote
-workspaces.
+The welcome work opens immediately on first install. After that, once an
+agent turn has been active for two seconds, ArtWait opens at random in
+**Famous**, a selection of popular and important paintings designated by The
+Met; switch to **Explore** for the full 5,000-painting collection.
 
 ## Artwork controls
 
