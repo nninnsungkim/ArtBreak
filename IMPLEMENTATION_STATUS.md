@@ -52,7 +52,7 @@ API key, server, LLM, or separate installer is required.
 
 ## Release blockers still open
 
-1. The `artwait` publisher and version 0.2.1 are public. The publisher account is not authenticated in this environment, so the 0.2.5 Windows VSIX must be uploaded from the Publisher management page (or through an authenticated publishing credential).
+1. The `artwait` publisher and version 0.2.4 are public. The publisher account is not authenticated in this environment, so the 0.2.5 Windows VSIX must be uploaded from the Publisher management page (or through an authenticated publishing credential).
 2. Privacy and support URLs remain to be chosen for the public listing.
 3. `artwait.exe` is not Authenticode-signed or timestamped. Marketplace packaging does not require it, but signing is a recommended Windows-release safeguard before broad distribution.
 4. WebView2 prerequisite/error-path checks remain open.
