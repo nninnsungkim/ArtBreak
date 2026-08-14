@@ -27,7 +27,7 @@ export function platformTargetFor(platform: NodeJS.Platform, architecture: strin
     if (platform === 'darwin') {
         return architecture === 'arm64' ? 'darwin-arm64' : 'darwin-x64';
     }
-    throw new Error(`ArtWait does not support ${platform}/${architecture}`);
+    throw new Error(`ArtBreak does not support ${platform}/${architecture}`);
 }
 
 export function platformTarget(): string {
@@ -41,15 +41,15 @@ export function platformTarget(): string {
  */
 export function companionLayout(platform: NodeJS.Platform = process.platform): CompanionLayout {
     if (platform === 'win32') {
-        return { payload: 'artwait.exe', executable: 'artwait.exe' };
+        return { payload: 'artbreak.exe', executable: 'artbreak.exe' };
     }
     if (platform === 'darwin') {
         return {
-            payload: 'ArtWait.app',
-            executable: path.join('ArtWait.app', 'Contents', 'MacOS', 'artwait')
+            payload: 'ArtBreak.app',
+            executable: path.join('ArtBreak.app', 'Contents', 'MacOS', 'artbreak')
         };
     }
-    throw new Error(`ArtWait does not support ${platform}`);
+    throw new Error(`ArtBreak does not support ${platform}`);
 }
 
 function executableName(): string {
@@ -87,13 +87,13 @@ export function getBundledCompanionPath(extensionPath: string): string {
         return developmentPath;
     }
 
-    throw new Error('ArtWait companion is missing from this extension package. Reinstall ArtWait.');
+    throw new Error('ArtBreak companion is missing from this extension package. Reinstall ArtBreak.');
 }
 
 export function getCompanionPath(_extensionPath: string): string {
     const installedPath = getInstalledExecutablePath();
     if (fs.existsSync(installedPath)) return installedPath;
-    throw new Error('ArtWait companion has not been installed yet. Reload VS Code or reinstall ArtWait.');
+    throw new Error('ArtBreak companion has not been installed yet. Reload VS Code or reinstall ArtBreak.');
 }
 
 function bundledManifestPath(extensionPath: string): string {
@@ -122,10 +122,10 @@ async function readBundledManifest(extensionPath: string, source: string): Promi
     if (!manifest || manifest.schemaVersion !== 1 || manifest.platform !== platformTarget() ||
         manifest.payload !== layout.payload || manifest.executable !== layout.executable ||
         path.basename(source) !== executableName() || !/^[a-f0-9]{64}$/i.test(manifest.sha256)) {
-        throw new Error('The bundled ArtWait companion manifest is invalid. Reinstall ArtWait.');
+        throw new Error('The bundled ArtBreak companion manifest is invalid. Reinstall ArtBreak.');
     }
     if ((await sha256(source)).toLowerCase() !== manifest.sha256.toLowerCase()) {
-        throw new Error('The bundled ArtWait companion failed its integrity check. Reinstall ArtWait.');
+        throw new Error('The bundled ArtBreak companion failed its integrity check. Reinstall ArtBreak.');
     }
     return manifest;
 }
@@ -181,7 +181,7 @@ export async function installCompanion(extensionPath: string): Promise<{
     const stagedExecutable = executablePathForPayload(stagedPath);
     await ensureExecutableMode(stagedExecutable);
     if ((await sha256(stagedExecutable)).toLowerCase() !== bundledManifest.sha256.toLowerCase()) {
-        throw new Error('The staged ArtWait companion failed its integrity check.');
+        throw new Error('The staged ArtBreak companion failed its integrity check.');
     }
 
     if (!fs.existsSync(installedPayload)) {

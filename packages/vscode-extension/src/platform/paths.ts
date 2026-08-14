@@ -2,35 +2,35 @@ import * as os from 'os';
 import * as path from 'path';
 
 /**
- * Returns the ArtWait state root directory based on the current platform.
+ * Returns the ArtBreak state root directory based on the current platform.
  *
- * - macOS: ~/.artwait
- * - Windows: %LOCALAPPDATA%\ArtWait
- * - Tests: uses ARTWAIT_HOME environment variable if set
+ * - macOS: ~/.artbreak
+ * - Windows: %LOCALAPPDATA%\ArtBreak
+ * - Tests: uses ARTBREAK_HOME environment variable if set
  */
 export function getStateRoot(): string {
     // Test/development override
-    if (process.env.ARTWAIT_HOME) {
-        return process.env.ARTWAIT_HOME;
+    if (process.env.ARTBREAK_HOME) {
+        return process.env.ARTBREAK_HOME;
     }
 
     const platform = os.platform();
 
     if (platform === 'darwin') {
-        return path.join(os.homedir(), '.artwait');
+        return path.join(os.homedir(), '.artbreak');
     } else if (platform === 'win32') {
         const localAppData = process.env.LOCALAPPDATA;
         if (!localAppData) {
             throw new Error('LOCALAPPDATA environment variable not found');
         }
-        return path.join(localAppData, 'ArtWait');
+        return path.join(localAppData, 'ArtBreak');
     } else {
         throw new Error(`Unsupported platform: ${platform}`);
     }
 }
 
 /**
- * Returns platform-specific paths within the ArtWait state root.
+ * Returns platform-specific paths within the ArtBreak state root.
  */
 export function getStatePaths() {
     const root = getStateRoot();
@@ -55,9 +55,9 @@ export function getInstalledExecutablePath(): string {
     const platform = os.platform();
 
     if (platform === 'darwin') {
-        return path.join(paths.app, 'ArtWait.app', 'Contents', 'MacOS', 'artwait');
+        return path.join(paths.app, 'ArtBreak.app', 'Contents', 'MacOS', 'artbreak');
     } else if (platform === 'win32') {
-        return path.join(paths.app, 'artwait.exe');
+        return path.join(paths.app, 'artbreak.exe');
     } else {
         throw new Error(`Unsupported platform: ${platform}`);
     }

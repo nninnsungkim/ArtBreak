@@ -9,13 +9,13 @@ on:
 jobs:
   package:
     env:
-      ARTWAIT_MACOS_SIGNING_IDENTITY: ${{ secrets.ARTWAIT_MACOS_SIGNING_IDENTITY }}
-      ARTWAIT_APPLE_ID: ${{ secrets.ARTWAIT_APPLE_ID }}
-      ARTWAIT_APPLE_APP_PASSWORD: ${{ secrets.ARTWAIT_APPLE_APP_PASSWORD }}
-      ARTWAIT_APPLE_TEAM_ID: ${{ secrets.ARTWAIT_APPLE_TEAM_ID }}
-      ARTWAIT_MACOS_CERTIFICATE_BASE64: ${{ secrets.ARTWAIT_MACOS_CERTIFICATE_BASE64 }}
-      ARTWAIT_MACOS_CERTIFICATE_PASSWORD: ${{ secrets.ARTWAIT_MACOS_CERTIFICATE_PASSWORD }}
-      ARTWAIT_MACOS_KEYCHAIN_PASSWORD: ${{ secrets.ARTWAIT_MACOS_KEYCHAIN_PASSWORD }}
+      ARTBREAK_MACOS_SIGNING_IDENTITY: ${{ secrets.ARTBREAK_MACOS_SIGNING_IDENTITY }}
+      ARTBREAK_APPLE_ID: ${{ secrets.ARTBREAK_APPLE_ID }}
+      ARTBREAK_APPLE_APP_PASSWORD: ${{ secrets.ARTBREAK_APPLE_APP_PASSWORD }}
+      ARTBREAK_APPLE_TEAM_ID: ${{ secrets.ARTBREAK_APPLE_TEAM_ID }}
+      ARTBREAK_MACOS_CERTIFICATE_BASE64: ${{ secrets.ARTBREAK_MACOS_CERTIFICATE_BASE64 }}
+      ARTBREAK_MACOS_CERTIFICATE_PASSWORD: ${{ secrets.ARTBREAK_MACOS_CERTIFICATE_PASSWORD }}
+      ARTBREAK_MACOS_KEYCHAIN_PASSWORD: ${{ secrets.ARTBREAK_MACOS_KEYCHAIN_PASSWORD }}
     strategy:
       fail-fast: false
       matrix:
@@ -36,15 +36,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: npm ci
       - name: Import macOS Developer ID certificate
-        if: ${{ startsWith(matrix.target, 'darwin-') && env.ARTWAIT_MACOS_CERTIFICATE_BASE64 != '' }}
+        if: ${{ startsWith(matrix.target, 'darwin-') && env.ARTBREAK_MACOS_CERTIFICATE_BASE64 != '' }}
         env:
-          CERTIFICATE_BASE64: ${{ env.ARTWAIT_MACOS_CERTIFICATE_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ env.ARTWAIT_MACOS_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ env.ARTWAIT_MACOS_KEYCHAIN_PASSWORD }}
+          CERTIFICATE_BASE64: ${{ env.ARTBREAK_MACOS_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ env.ARTBREAK_MACOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ env.ARTBREAK_MACOS_KEYCHAIN_PASSWORD }}
         shell: bash
         run: |
-          certificate_path="$RUNNER_TEMP/artwait-developer-id.p12"
-          keychain_path="$RUNNER_TEMP/artwait-signing.keychain-db"
+          certificate_path="$RUNNER_TEMP/artbreak-developer-id.p12"
+          keychain_path="$RUNNER_TEMP/artbreak-signing.keychain-db"
           echo -n "$CERTIFICATE_BASE64" | base64 --decode > "$certificate_path"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
           security set-keychain-settings -lut 21600 "$keychain_path"
@@ -52,13 +52,13 @@ jobs:
           security import "$certificate_path" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_path"
           security list-keychain -d user -s "$keychain_path"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$keychain_path"
-      - run: npm run typecheck --workspace artwait-vscode
-      - run: npm run lint --workspace artwait-vscode
-      - run: npm run test:run --workspace artwait-vscode
+      - run: npm run typecheck --workspace artbreak-vscode
+      - run: npm run lint --workspace artbreak-vscode
+      - run: npm run test:run --workspace artbreak-vscode
       - run: cargo test
         working-directory: packages/companion/src-tauri
-      - run: npm run package:vsix --workspace artwait-vscode -- ${{ matrix.target }}
+      - run: npm run package:vsix --workspace artbreak-vscode -- ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: artwait-${{ matrix.target }}
+          name: artbreak-${{ matrix.target }}
           path: packages/vscode-extension/*.vsix

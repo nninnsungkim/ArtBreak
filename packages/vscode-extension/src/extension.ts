@@ -20,7 +20,7 @@ import {
 } from './hooks/installer';
 import { getCompanionPath, installCompanion, showCompanion } from './platform/companion';
 
-const WELCOME_ARTWORK_SHOWN_KEY = 'artwait.welcomeArtworkShown';
+const WELCOME_ARTWORK_SHOWN_KEY = 'artbreak.welcomeArtworkShown';
 const ACTIVITY_MONITOR_INTERVAL_MS = 350;
 const ACTIVITY_SHOW_RETRY_MS = 2_600;
 
@@ -32,13 +32,13 @@ function scheduleWelcomeArtwork(context: vscode.ExtensionContext): vscode.Dispos
     const timer = setTimeout(() => {
         try {
             // This first artwork never depends on a Claude or Codex hook.
-            // It is still a normal ArtWait window, so it respects pause state
+            // It is still a normal ArtBreak window, so it respects pause state
             // and the single-window lock used by agent-triggered artwork.
             showCompanion(context.extensionPath, false, 'welcome');
             void context.globalState.update(WELCOME_ARTWORK_SHOWN_KEY, true)
-                .then(undefined, error => console.error('ArtWait could not save welcome state', error));
+                .then(undefined, error => console.error('ArtBreak could not save welcome state', error));
         } catch (error) {
-            console.error('ArtWait could not open its welcome artwork', error);
+            console.error('ArtBreak could not open its welcome artwork', error);
         }
     }, 600);
 
@@ -49,7 +49,7 @@ function scheduleWelcomeArtwork(context: vscode.ExtensionContext): vscode.Dispos
  * Codex command hooks deliberately do only the small, synchronous part of a
  * lifecycle transition: writing or removing an activity marker. The extension
  * host is already running in VS Code, so it can safely launch the detached,
- * two-second-gated ArtWait window without putting that startup cost inside the
+ * two-second-gated ArtBreak window without putting that startup cost inside the
  * hook's short execution budget.
  */
 function monitorActiveArtwork(context: vscode.ExtensionContext): vscode.Disposable {
@@ -77,7 +77,7 @@ function monitorActiveArtwork(context: vscode.ExtensionContext): vscode.Disposab
             nextShowEligibleAt = Date.now() + ACTIVITY_SHOW_RETRY_MS;
             showCompanion(context.extensionPath);
         } catch (error) {
-            console.error('ArtWait could not check active agent work', error);
+            console.error('ArtBreak could not check active agent work', error);
         } finally {
             checking = false;
         }
@@ -92,12 +92,12 @@ function monitorActiveArtwork(context: vscode.ExtensionContext): vscode.Disposab
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-    console.log('ArtWait extension is now active');
+    console.log('ArtBreak extension is now active');
 
     // Check if remote
     if (vscode.env.remoteName) {
         vscode.window.showWarningMessage(
-            'ArtWait does not support remote workspaces. The extension will not be active.'
+            'ArtBreak does not support remote workspaces. The extension will not be active.'
         );
         return;
     }
@@ -105,7 +105,7 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
         await installCompanion(context.extensionPath);
     } catch (error) {
-        vscode.window.showErrorMessage(`ArtWait companion could not be prepared: ${error}`);
+        vscode.window.showErrorMessage(`ArtBreak companion could not be prepared: ${error}`);
         return;
     }
 
@@ -115,10 +115,10 @@ export async function activate(context: vscode.ExtensionContext) {
     const welcomeArtwork = scheduleWelcomeArtwork(context);
     const activeArtworkMonitor = monitorActiveArtwork(context);
 
-    // ArtWait is ready to use immediately after installation. Keep both agent
+    // ArtBreak is ready to use immediately after installation. Keep both agent
     // integrations current as part of activation instead of requiring a
     // separate Command Palette action. Each installer is idempotent and only
-    // rewrites a configuration file when its ArtWait entries need to change.
+    // rewrites a configuration file when its ArtBreak entries need to change.
     const companionPath = getCompanionPath(context.extensionPath);
     const [claudeHooks, codexHooks] = await Promise.all([
         installClaudeHooks(companionPath),
@@ -129,14 +129,14 @@ export async function activate(context: vscode.ExtensionContext) {
         .map(result => result.message);
     if (hookFailures.length > 0) {
         vscode.window.showWarningMessage(
-            `ArtWait could not update some agent hooks: ${hookFailures.join(' ')}`
+            `ArtBreak could not update some agent hooks: ${hookFailures.join(' ')}`
         );
     } else {
-        console.log('ArtWait hooks are installed for Claude Code and Codex');
+        console.log('ArtBreak hooks are installed for Claude Code and Codex');
     }
 
     // Register pause command
-    const pauseCommand = vscode.commands.registerCommand('artwait.pause', async () => {
+    const pauseCommand = vscode.commands.registerCommand('artbreak.pause', async () => {
         const choice = await vscode.window.showQuickPick([
             { label: '30 minutes', value: 0.5 },
             { label: '1 hour', value: 1 },
@@ -152,7 +152,7 @@ export async function activate(context: vscode.ExtensionContext) {
             { label: 'Until all currently open VS Code windows close', value: -2 },
             { label: 'Indefinitely', value: -3 }
         ], {
-            placeHolder: 'Pause ArtWait for...'
+            placeHolder: 'Pause ArtBreak for...'
         });
 
         if (!choice) return;
@@ -173,7 +173,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
                 if (input) {
                     await pauseForHours(parseFloat(input));
-                    vscode.window.showInformationMessage(`ArtWait paused for ${input} hours`);
+                    vscode.window.showInformationMessage(`ArtBreak paused for ${input} hours`);
                 }
             } else if (choice.value === -2) {
                 // Current leases
@@ -184,53 +184,53 @@ export async function activate(context: vscode.ExtensionContext) {
 
                 await pauseForCurrentLeases(leaseIds);
                 vscode.window.showInformationMessage(
-                    'ArtWait paused until all currently open VS Code windows close'
+                    'ArtBreak paused until all currently open VS Code windows close'
                 );
             } else if (choice.value === -3) {
                 // Indefinitely
                 await pauseIndefinitely();
-                vscode.window.showInformationMessage('ArtWait paused indefinitely');
+                vscode.window.showInformationMessage('ArtBreak paused indefinitely');
             } else if (choice.value === -4) {
                 // Rest of today
                 await pauseUntilEndOfDay();
-                vscode.window.showInformationMessage('ArtWait paused for the rest of today');
+                vscode.window.showInformationMessage('ArtBreak paused for the rest of today');
             } else {
                 // Fixed hours
                 await pauseForHours(choice.value);
-                vscode.window.showInformationMessage(`ArtWait paused for ${choice.label}`);
+                vscode.window.showInformationMessage(`ArtBreak paused for ${choice.label}`);
             }
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to pause ArtWait: ${error}`);
+            vscode.window.showErrorMessage(`Failed to pause ArtBreak: ${error}`);
         }
     });
 
     // Register resume command
-    const resumeCommand = vscode.commands.registerCommand('artwait.resume', async () => {
+    const resumeCommand = vscode.commands.registerCommand('artbreak.resume', async () => {
         try {
             await removePauseState();
-            vscode.window.showInformationMessage('ArtWait resumed');
+            vscode.window.showInformationMessage('ArtBreak resumed');
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to resume ArtWait: ${error}`);
+            vscode.window.showErrorMessage(`Failed to resume ArtBreak: ${error}`);
         }
     });
 
     // Register test window command
-    const testWindowCommand = vscode.commands.registerCommand('artwait.testWindow', async () => {
+    const testWindowCommand = vscode.commands.registerCommand('artbreak.testWindow', async () => {
         try {
             showCompanion(context.extensionPath, true);
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to open ArtWait: ${error}`);
+            vscode.window.showErrorMessage(`Failed to open ArtBreak: ${error}`);
         }
     });
 
     // Register status command
-    const statusCommand = vscode.commands.registerCommand('artwait.status', async () => {
+    const statusCommand = vscode.commands.registerCommand('artbreak.status', async () => {
         try {
             const pauseState = await readPauseState();
             const activeMarkers = await countActiveMarkers();
             const leases = await readAllLeases();
 
-            let statusMessage = '**ArtWait Status**\n\n';
+            let statusMessage = '**ArtBreak Status**\n\n';
 
             if (pauseState) {
                 if (pauseState.mode.type === 'fixed') {
@@ -254,7 +254,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
 
     // Register reset runtime command
-    const resetRuntimeCommand = vscode.commands.registerCommand('artwait.resetRuntime', async () => {
+    const resetRuntimeCommand = vscode.commands.registerCommand('artbreak.resetRuntime', async () => {
         const choice = await vscode.window.showWarningMessage(
             'This will clean up stale markers and dismiss state. Continue?',
             { modal: true },
@@ -277,12 +277,12 @@ export async function activate(context: vscode.ExtensionContext) {
     });
 
     // Register hook installer commands
-    const installHooksCommand = vscode.commands.registerCommand('artwait.installHooks', async () => {
+    const installHooksCommand = vscode.commands.registerCommand('artbreak.installHooks', async () => {
         const choice = await vscode.window.showQuickPick([
             { label: 'Install hooks for Claude Code', value: 'claude' },
             { label: 'Install hooks for Codex', value: 'codex' }
         ], {
-            placeHolder: 'Install ArtWait hooks for...'
+            placeHolder: 'Install ArtBreak hooks for...'
         });
 
         if (!choice) return;
@@ -309,9 +309,9 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    const removeHooksCommand = vscode.commands.registerCommand('artwait.removeHooks', async () => {
+    const removeHooksCommand = vscode.commands.registerCommand('artbreak.removeHooks', async () => {
         const choice = await vscode.window.showWarningMessage(
-            'Remove ArtWait hooks from agent configuration?',
+            'Remove ArtBreak hooks from agent configuration?',
             { modal: true },
             'Yes',
             'No'
@@ -338,11 +338,11 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    const hookStatusCommand = vscode.commands.registerCommand('artwait.hookStatus', async () => {
+    const hookStatusCommand = vscode.commands.registerCommand('artbreak.hookStatus', async () => {
         try {
             const status = await getHookStatus();
 
-            let message = '**ArtWait Hook Status**\n\n';
+            let message = '**ArtBreak Hook Status**\n\n';
             message += `Claude Code: ${status.claudeInstalled ? '✓ Installed' : '✗ Not installed'}\n`;
             message += `Codex: ${status.codexInstalled ? '✓ Installed' : '✗ Not installed'}\n`;
 
@@ -377,6 +377,6 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export async function deactivate() {
-    console.log('ArtWait extension is deactivating');
+    console.log('ArtBreak extension is deactivating');
     await stopLease();
 }

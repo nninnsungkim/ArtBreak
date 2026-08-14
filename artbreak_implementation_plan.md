@@ -1,5 +1,5 @@
   ---
-title: ArtWait - Complete Implementation Plan
+title: ArtBreak - Complete Implementation Plan
 status: implementation-ready
 language: English
 last_verified: 2026-08-07
@@ -14,11 +14,11 @@ architecture_rule: one VS Code extension + one Tauri executable per platform + o
 windows_runtime: system Microsoft Edge WebView2 Evergreen Runtime
 ---
 
-# ArtWait - Complete Implementation Plan
+# ArtBreak - Complete Implementation Plan
 
 ## 0. Purpose of This Document
 
-This document is the implementation specification for **ArtWait**, a minimal VS Code companion that displays one public-domain painting in a separate desktop window while Claude Code or Codex is working.
+This document is the implementation specification for **ArtBreak**, a minimal VS Code companion that displays one public-domain painting in a separate desktop window while Claude Code or Codex is working.
 
 It is intentionally written for an AI coding agent and a senior engineer. It defines:
 
@@ -44,13 +44,13 @@ This document is authoritative unless the repository already contains a tested i
 
 ## 1.1 One-sentence product definition
 
-**ArtWait is a free, open-source VS Code companion that opens a minimal black desktop window with one public-domain painting from The Met when Claude Code or Codex remains busy for at least two seconds, then exits automatically when all tracked work is finished.**
+**ArtBreak is a free, open-source VS Code companion that opens a minimal black desktop window with one public-domain painting from The Met when Claude Code or Codex remains busy for at least two seconds, then exits automatically when all tracked work is finished.**
 
 ## 1.2 Core user flow
 
 1. The user submits a prompt to Claude Code or Codex from a local VS Code desktop workflow.
 2. The agent start hook records an active turn.
-3. ArtWait launches hidden and waits **2,000 milliseconds**.
+3. ArtBreak launches hidden and waits **2,000 milliseconds**.
 4. If the agent is still active after the delay, a separate desktop window becomes visible.
 5. The window displays exactly one painting.
 6. The bottom row contains:
@@ -59,7 +59,7 @@ This document is authoritative unless the repository already contains a tested i
    - a right arrow.
 7. Mouse clicks and keyboard arrow keys navigate a randomized, no-repeat painting sequence.
 8. The last active agent turn ends.
-9. The ArtWait window and process exit automatically.
+9. The ArtBreak window and process exit automatically.
 
 ## 1.3 Manual user controls
 
@@ -67,10 +67,10 @@ The user must also be able to:
 
 - press `Escape` to dismiss the current display;
 - use the native window close button to perform the same dismissal;
-- pause ArtWait for a selected number of hours;
+- pause ArtBreak for a selected number of hours;
 - pause until the currently open local VS Code windows close;
 - pause indefinitely;
-- resume ArtWait manually;
+- resume ArtBreak manually;
 - test the window without running an agent;
 - diagnose and reset stale runtime state;
 - install, repair, or remove hooks without damaging unrelated hook configuration.
@@ -285,11 +285,11 @@ Do not call Windows support complete while relying on untested macOS assumptions
 
 ## 4.1 Automatic display
 
-ArtWait MUST open only when all of these conditions are true:
+ArtBreak MUST open only when all of these conditions are true:
 
 - a supported agent emits a tracked start event;
 - a fresh local VS Code lease matches the hook working directory;
-- ArtWait is not paused;
+- ArtBreak is not paused;
 - the current busy period has not been manually dismissed;
 - at least one active marker remains after the two-second delay;
 - the companion is running on a supported local desktop environment.
@@ -343,7 +343,7 @@ The companion MUST exit when:
 
 `Escape` and the native close button mean:
 
-> Dismiss ArtWait for the current continuous busy period, but do not pause future work.
+> Dismiss ArtBreak for the current continuous busy period, but do not pause future work.
 
 On manual dismissal:
 
@@ -352,13 +352,13 @@ On manual dismissal:
 3. Continue tracking markers for the current busy period.
 4. Do not reopen while any marker from the continuous busy period remains.
 5. Remove the dismiss state automatically when the marker count returns to zero.
-6. Allow the next future transition from idle to busy to open ArtWait normally.
+6. Allow the next future transition from idle to busy to open ArtBreak normally.
 
 This prevents immediate respawn after a manual close while preserving normal behavior for the next agent task.
 
 ## 4.7 Pause semantics
 
-The user can pause ArtWait through the VS Code Command Palette.
+The user can pause ArtBreak through the VS Code Command Palette.
 
 Required choices:
 
@@ -374,26 +374,26 @@ Required choices:
 Required commands:
 
 ```text
-ArtWait: Pause...
-ArtWait: Resume
+ArtBreak: Pause...
+ArtBreak: Resume
 ```
 
 A pause suppresses new display activations. Work that begins while paused is not retroactively displayed when the pause expires.
 
-If ArtWait is already visible when a pause is activated, the window must close promptly.
+If ArtBreak is already visible when a pause is activated, the window must close promptly.
 
 ## 4.8 Resume semantics
 
-`ArtWait: Resume` removes the active pause state.
+`ArtBreak: Resume` removes the active pause state.
 
 If tracked markers from work that started before the pause still exist, the extension may invoke the companion again. The normal two-second visibility gate still applies unless the invocation is explicitly a test invocation.
 
 ## 4.9 Test mode
 
-`ArtWait: Test Window` launches:
+`ArtBreak: Test Window` launches:
 
 ```text
-artwait show --test
+artbreak show --test
 ```
 
 Test mode:
@@ -424,17 +424,17 @@ Test mode:
                        | writes state / invokes stable binary
                        v
 +-----------------------------------------+
-| One ArtWait Tauri Executable             |
+| One ArtBreak Tauri Executable             |
 |                                         |
-| artwait hook ...   -> CLI hook mode      |
-| artwait show ...   -> desktop UI mode    |
-| artwait control ...-> pause/reset/status |
+| artbreak hook ...   -> CLI hook mode      |
+| artbreak show ...   -> desktop UI mode    |
+| artbreak control ...-> pause/reset/status |
 +----------------------+------------------+
                        |
                        | filesystem only
                        v
 +-----------------------------------------+
-| <ARTWAIT_HOME>/ runtime and state files   |
+| <ARTBREAK_HOME>/ runtime and state files   |
 |                                         |
 | - VS Code leases                         |
 | - active turn markers                    |
@@ -487,7 +487,7 @@ Keep one architecture and one behavior model. Do not create separate macOS and W
 
 Platform-specific code is restricted to these operations:
 
-- resolving the ArtWait state root;
+- resolving the ArtBreak state root;
 - resolving the bundled and installed executable paths;
 - selecting the correct extension resource;
 - launching the UI without a terminal or console flash;
@@ -537,7 +537,7 @@ The same source builds one native executable per supported platform. Each execut
 ### Hook mode
 
 ```text
-artwait hook <provider> <event>
+artbreak hook <provider> <event>
 ```
 
 Responsibilities:
@@ -554,7 +554,7 @@ Responsibilities:
 ### Show mode
 
 ```text
-artwait show [--test] [--reason <start|resume|test>]
+artbreak show [--test] [--reason <start|resume|test>]
 ```
 
 Responsibilities:
@@ -571,12 +571,12 @@ Responsibilities:
 ### Control mode
 
 ```text
-artwait control pause --hours <number>
-artwait control pause --indefinite
-artwait control pause --current-leases
-artwait control resume
-artwait control status
-artwait control reset-runtime
+artbreak control pause --hours <number>
+artbreak control pause --indefinite
+artbreak control pause --current-leases
+artbreak control resume
+artbreak control status
+artbreak control reset-runtime
 ```
 
 Responsibilities:
@@ -688,25 +688,25 @@ If the repository is truly empty:
 
 # 8. Local Filesystem Layout
 
-Use one logical layout under a platform-specific ArtWait root.
+Use one logical layout under a platform-specific ArtBreak root.
 
-| Platform | `<ARTWAIT_HOME>` |
+| Platform | `<ARTBREAK_HOME>` |
 |---|---|
-| macOS | `~/.artwait` |
-| Windows | `%LOCALAPPDATA%\ArtWait` |
-| Automated tests | the temporary directory supplied by `ARTWAIT_HOME` |
+| macOS | `~/.artbreak` |
+| Windows | `%LOCALAPPDATA%\ArtBreak` |
+| Automated tests | the temporary directory supplied by `ARTBREAK_HOME` |
 
-`ARTWAIT_HOME` is a test and development override. Production code normally derives the root from the platform. Never derive it from hook payload data.
+`ARTBREAK_HOME` is a test and development override. Production code normally derives the root from the platform. Never derive it from hook payload data.
 
 Logical layout:
 
 ```text
-<ARTWAIT_HOME>/
+<ARTBREAK_HOME>/
 ├── app/
-│   ├── ArtWait.app/                 # macOS only
-│   ├── artwait.exe                  # Windows only
+│   ├── ArtBreak.app/                 # macOS only
+│   ├── artbreak.exe                  # Windows only
 │   ├── manifest.json
-│   ├── artwait.next.exe             # Windows pending update only
+│   ├── artbreak.next.exe             # Windows pending update only
 │   └── pending-update.json          # present only when needed
 ├── run/
 │   ├── vscode/
@@ -722,7 +722,7 @@ Logical layout:
 │   ├── claude-settings-<timestamp>.json
 │   └── codex-hooks-<timestamp>.json
 └── logs/
-    └── artwait.log
+    └── artbreak.log
 ```
 
 Only the platform-relevant companion payload exists in a real installation. The diagram shows both names so the shared logical layout is explicit.
@@ -784,7 +784,7 @@ Use the repository's existing atomic-write helper if it is correct on both platf
 
 The TypeScript extension and Rust companion must agree exactly on:
 
-- ArtWait root;
+- ArtBreak root;
 - runtime directories;
 - installed executable path;
 - manifest path.
@@ -849,7 +849,7 @@ In-memory state may cache parsed values, but every lifecycle decision must be re
 
 # 10. VS Code Lease Design
 
-Global user hooks can fire outside VS Code. A lease prevents ArtWait from opening for unrelated terminal sessions.
+Global user hooks can fire outside VS Code. A lease prevents ArtBreak from opening for unrelated terminal sessions.
 
 ## 10.1 Lease file schema
 
@@ -1000,7 +1000,7 @@ provider | sessionId | turnId-or-session-fallback
 Hash it with SHA-256 for a filename-safe marker name.
 
 ```text
-<ARTWAIT_HOME>/run/sessions/<sha256>.json
+<ARTBREAK_HOME>/run/sessions/<sha256>.json
 ```
 
 ## 11.4 Marker schema
@@ -1034,7 +1034,7 @@ if no lease: return neutral
 if pause active: return neutral without creating marker
 create/update marker atomically
 if dismiss-until-idle remains active from an existing busy period: return neutral without spawning UI
-spawn `artwait show --reason start` detached
+spawn `artbreak show --reason start` detached
 return provider-appropriate neutral hook output
 ```
 
@@ -1060,7 +1060,7 @@ return neutral output
 
 ## 11.8 Failure processing
 
-Claude `StopFailure` is treated as a stop for ArtWait lifecycle purposes.
+Claude `StopFailure` is treated as a stop for ArtBreak lifecycle purposes.
 
 Remove the matching marker best-effort. Claude ignores hook output and exit status for this event, but the binary should still avoid unnecessary output.
 
@@ -1204,7 +1204,7 @@ The VS Code input box must:
 
 ## 13.4 Pause command UX
 
-`ArtWait: Pause...` uses `vscode.window.showQuickPick`.
+`ArtBreak: Pause...` uses `vscode.window.showQuickPick`.
 
 Suggested items:
 
@@ -1250,12 +1250,12 @@ Test mode does not write dismiss state.
 
 ## 13.7 Resume behavior
 
-`ArtWait: Resume`:
+`ArtBreak: Resume`:
 
 1. deletes `pause.json`;
 2. clears no active markers;
-3. reports that ArtWait is enabled;
-4. if valid existing markers remain, invokes `artwait show --reason resume`;
+3. reports that ArtBreak is enabled;
+4. if valid existing markers remain, invokes `artbreak show --reason resume`;
 5. production show mode still uses the two-second gate.
 
 ## 13.8 Status and reset
@@ -1263,9 +1263,9 @@ Test mode does not write dismiss state.
 Required commands:
 
 ```text
-ArtWait: Show Status
-ArtWait: Diagnose
-ArtWait: Reset Runtime State
+ArtBreak: Show Status
+ArtBreak: Diagnose
+ArtBreak: Reset Runtime State
 ```
 
 Status should report, without exposing prompt data:
@@ -1332,7 +1332,7 @@ stderr noise: zero
 
 ## 14.4 Fail-open behavior
 
-ArtWait is observational. It must never block or alter agent work.
+ArtBreak is observational. It must never block or alter agent work.
 
 For every parse, file, spawn, or state error:
 
@@ -1363,7 +1363,7 @@ If malformed stdin prevents payload parsing, the CLI arguments still identify pr
 
 ## 14.6 No prompt retention
 
-Although start events include the submitted prompt, ArtWait must not:
+Although start events include the submitted prompt, ArtBreak must not:
 
 - store it;
 - log it;
@@ -1385,14 +1385,14 @@ Hook definitions must point to a stable absolute executable path with no version
 
 | Platform | Stable command path |
 |---|---|
-| macOS | `~/.artwait/app/ArtWait.app/Contents/MacOS/artwait` |
-| Windows | `%LOCALAPPDATA%\ArtWait\app\artwait.exe` resolved to an absolute path before writing configuration |
+| macOS | `~/.artbreak/app/ArtBreak.app/Contents/MacOS/artbreak` |
+| Windows | `%LOCALAPPDATA%\ArtBreak\app\artbreak.exe` resolved to an absolute path before writing configuration |
 
 Examples:
 
 ```text
-/Users/name/.artwait/app/ArtWait.app/Contents/MacOS/artwait
-C:\Users\Name\AppData\Local\ArtWait\app\artwait.exe
+/Users/name/.artbreak/app/ArtBreak.app/Contents/MacOS/artbreak
+C:\Users\Name\AppData\Local\ArtBreak\app\artbreak.exe
 ```
 
 Do not write `%LOCALAPPDATA%`, `~`, or another environment-variable expression into hook configuration. Resolve the absolute path first so provider trust signatures and command execution are deterministic.
@@ -1421,7 +1421,7 @@ Conceptual macOS entry:
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/name/.artwait/app/ArtWait.app/Contents/MacOS/artwait",
+            "command": "/Users/name/.artbreak/app/ArtBreak.app/Contents/MacOS/artbreak",
             "args": ["hook", "claude", "start"],
             "timeout": 2
           }
@@ -1442,7 +1442,7 @@ Conceptual Windows entry:
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Users\\Name\\AppData\\Local\\ArtWait\\app\\artwait.exe",
+            "command": "C:\\Users\\Name\\AppData\\Local\\ArtBreak\\app\\artbreak.exe",
             "args": ["hook", "claude", "start"],
             "timeout": 2
           }
@@ -1463,7 +1463,7 @@ Target user-level file on both supported platforms:
 ~/.codex/hooks.json
 ```
 
-Codex loads hooks from `hooks.json` and inline `[hooks]` tables in `config.toml`. ArtWait should manage only `hooks.json` and must not rewrite `config.toml`.
+Codex loads hooks from `hooks.json` and inline `[hooks]` tables in `config.toml`. ArtBreak should manage only `hooks.json` and must not rewrite `config.toml`.
 
 When the schema accepts only one command string, construct it with a tested platform-specific quoting helper.
 
@@ -1471,14 +1471,14 @@ Conceptual macOS entry:
 
 ```json
 {
-  "description": "ArtWait lifecycle hooks",
+  "description": "ArtBreak lifecycle hooks",
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "\"/Users/name/.artwait/app/ArtWait.app/Contents/MacOS/artwait\" hook codex start",
+            "command": "\"/Users/name/.artbreak/app/ArtBreak.app/Contents/MacOS/artbreak\" hook codex start",
             "timeout": 2
           }
         ]
@@ -1492,14 +1492,14 @@ Conceptual Windows entry after JSON escaping:
 
 ```json
 {
-  "description": "ArtWait lifecycle hooks",
+  "description": "ArtBreak lifecycle hooks",
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "\"C:\\Users\\Name\\AppData\\Local\\ArtWait\\app\\artwait.exe\" hook codex start",
+            "command": "\"C:\\Users\\Name\\AppData\\Local\\ArtBreak\\app\\artbreak.exe\" hook codex start",
             "timeout": 2
           }
         ]
@@ -1511,7 +1511,7 @@ Conceptual Windows entry after JSON escaping:
 
 Create corresponding `Stop` and `SessionEnd` entries.
 
-Do not invoke PowerShell, `cmd.exe /c`, `/bin/sh -c`, or another wrapper unless the provider's documented schema makes a direct executable invocation impossible. If a shell string is unavoidable, keep every payload value out of it; only the trusted absolute ArtWait path and constant arguments may appear.
+Do not invoke PowerShell, `cmd.exe /c`, `/bin/sh -c`, or another wrapper unless the provider's documented schema makes a direct executable invocation impossible. If a shell string is unavoidable, keep every payload value out of it; only the trusted absolute ArtBreak path and constant arguments may appear.
 
 ## 15.3A Windows command, subsystem, and stdio constraint
 
@@ -1519,7 +1519,7 @@ The Windows build must preserve hook stdin and stdout while preventing a console
 
 Therefore:
 
-- build `artwait.exe` as a console-subsystem executable;
+- build `artbreak.exe` as a console-subsystem executable;
 - do not apply `#![windows_subsystem = "windows"]` to the production binary, because a detached Windows-subsystem process can have null standard handles;
 - hook mode reads inherited stdin and writes provider-neutral stdout normally;
 - UI launches suppress the console through process-creation options, not by changing the executable subsystem;
@@ -1536,16 +1536,16 @@ For each settings file:
 2. Preserve a timestamped backup before modification.
 3. Parse using the repository's existing JSON/JSONC tooling.
 4. If no suitable parser exists, use one focused parser that preserves comments and trailing commas where relevant.
-5. Locate ArtWait entries by stable command signature, not array index.
-6. Remove stale duplicate ArtWait entries.
-7. Insert exactly one current ArtWait entry per required event.
+5. Locate ArtBreak entries by stable command signature, not array index.
+6. Remove stale duplicate ArtBreak entries.
+7. Insert exactly one current ArtBreak entry per required event.
 8. Preserve unrelated hook groups and metadata.
 9. Write a temporary file.
 10. Parse the temporary file again.
 11. Atomically replace the original.
 12. Re-read and verify the final structure.
 
-Never replace the entire user's hook object with an ArtWait-only object.
+Never replace the entire user's hook object with an ArtBreak-only object.
 
 ## 15.5 Idempotency
 
@@ -1559,12 +1559,12 @@ install(install(config)) == install(config)
 
 ## 15.6 Selective removal
 
-`ArtWait: Remove Agent Hooks` removes only hook handlers whose command matches the ArtWait stable command signature.
+`ArtBreak: Remove Agent Hooks` removes only hook handlers whose command matches the ArtBreak stable command signature.
 
 It must:
 
 - preserve unrelated handlers in the same matcher group;
-- remove empty ArtWait-created groups when safe;
+- remove empty ArtBreak-created groups when safe;
 - preserve unrelated event groups;
 - leave backups;
 - not remove the companion automatically unless a separate uninstall flow explicitly requests it.
@@ -1586,7 +1586,7 @@ Codex requires non-managed command hooks to be reviewed and trusted by exact def
 After installation or any hook-command change, show:
 
 ```text
-ArtWait hooks were installed for Codex.
+ArtBreak hooks were installed for Codex.
 Open Codex and run /hooks to review and trust them.
 ```
 
@@ -1602,8 +1602,8 @@ At minimum, test:
 - missing file;
 - existing unrelated events;
 - existing unrelated handlers in the same event;
-- existing ArtWait old-version handlers;
-- duplicate ArtWait entries;
+- existing ArtBreak old-version handlers;
+- duplicate ArtBreak entries;
 - comments and trailing commas where supported;
 - malformed input;
 - install twice;
@@ -1613,7 +1613,7 @@ At minimum, test:
 - macOS and Windows stable paths;
 - JSON escaping of Windows backslashes;
 - command paths containing spaces, Unicode, parentheses, and ampersands;
-- case-insensitive detection of stale Windows ArtWait entries;
+- case-insensitive detection of stale Windows ArtBreak entries;
 - no shell-wrapper insertion.
 
 ---
@@ -1627,10 +1627,10 @@ The extension packages one native payload per platform-specific VSIX.
 ```text
 extension/resources/
 ├── darwin-arm64/
-│   ├── ArtWait.app/
+│   ├── ArtBreak.app/
 │   └── manifest.json
 └── win32-x64/
-    ├── artwait.exe
+    ├── artbreak.exe
     └── manifest.json
 ```
 
@@ -1640,8 +1640,8 @@ A platform-specific VSIX must contain only its matching native payload.
 
 | Platform | Companion payload | Manifest |
 |---|---|---|
-| macOS | `~/.artwait/app/ArtWait.app` | `~/.artwait/app/manifest.json` |
-| Windows | `%LOCALAPPDATA%\ArtWait\app\artwait.exe` | `%LOCALAPPDATA%\ArtWait\app\manifest.json` |
+| macOS | `~/.artbreak/app/ArtBreak.app` | `~/.artbreak/app/manifest.json` |
+| Windows | `%LOCALAPPDATA%\ArtBreak\app\artbreak.exe` | `%LOCALAPPDATA%\ArtBreak\app\manifest.json` |
 
 The executable path remains stable across upgrades because agent hook trust and configuration refer to it.
 
@@ -1670,7 +1670,7 @@ The extension must reject a bundled manifest whose platform does not match `proc
 4. Copy the new payload to a temporary sibling path on the same volume.
 5. Verify manifest and executable presence.
 6. On macOS, verify executable permission.
-7. Best-effort run `artwait control status --self-check` without initializing the UI.
+7. Best-effort run `artbreak control status --self-check` without initializing the UI.
 8. Preserve the current working payload until replacement succeeds.
 9. Replace or stage the new payload using the platform-specific rules below.
 10. Re-run self-check from the stable path.
@@ -1690,16 +1690,16 @@ Before public distribution on macOS:
 
 ## 16.6 Windows replacement and locked-executable behavior
 
-Windows may prevent replacement or renaming of a running `artwait.exe`.
+Windows may prevent replacement or renaming of a running `artbreak.exe`.
 
 Required behavior:
 
-1. copy the new signed executable to `artwait.next.exe`;
+1. copy the new signed executable to `artbreak.next.exe`;
 2. verify its embedded/adjacent manifest and self-check;
-3. attempt to move the current executable to a rollback name and promote `artwait.next.exe` to `artwait.exe`;
+3. attempt to move the current executable to a rollback name and promote `artbreak.next.exe` to `artbreak.exe`;
 4. if Windows reports a sharing or access violation because the executable is running, leave the verified pending file and write `pending-update.json`;
 5. finalize the pending update on the next extension activation or repair command when the companion is no longer running;
-6. do not kill an active ArtWait window solely to update;
+6. do not kill an active ArtBreak window solely to update;
 7. keep the old executable usable until promotion succeeds;
 8. remove stale pending files only after validating version and age.
 
@@ -1714,7 +1714,7 @@ First-release policy:
 - support Windows 10 and Windows 11 x64 where the Evergreen WebView2 Runtime is available;
 - rely on the system runtime rather than bundling a fixed runtime;
 - do not add MSI or NSIS installation merely to provision WebView2;
-- make `ArtWait: Diagnose` report a likely WebView2 prerequisite when the signed companion passes CLI self-check but the UI cannot initialize;
+- make `ArtBreak: Diagnose` report a likely WebView2 prerequisite when the signed companion passes CLI self-check but the UI cannot initialize;
 - provide a concise link to the official Microsoft/Tauri prerequisite guidance in user documentation;
 - test on a clean Windows user profile.
 
@@ -1724,7 +1724,7 @@ If real users frequently lack WebView2, revisit the distribution decision in a l
 
 Before public distribution on Windows:
 
-- code-sign `artwait.exe` with the selected Authenticode certificate;
+- code-sign `artbreak.exe` with the selected Authenticode certificate;
 - timestamp the signature;
 - verify the signature after copying it into the extension resource and after installation;
 - build and sign on a trusted Windows CI runner or Windows signing environment;
@@ -1755,12 +1755,12 @@ Use the official Tauri single-instance plugin or an existing tested repository e
 
 ## 17.1 Requirement
 
-At most one production or test ArtWait UI process may own the visible window at a time.
+At most one production or test ArtBreak UI process may own the visible window at a time.
 
 Multiple start hooks may concurrently execute:
 
 ```text
-artwait show --reason start
+artbreak show --reason start
 ```
 
 Only one process proceeds as the UI owner.
@@ -1789,7 +1789,7 @@ This section is a release-critical constraint, not an optional implementation de
 
 ## 17A.1 One executable, console subsystem
 
-The same `artwait.exe` must support hook, show, and control modes.
+The same `artbreak.exe` must support hook, show, and control modes.
 
 Because hook mode must read stdin and Codex `Stop` may require valid JSON on stdout, the Windows binary remains a console-subsystem executable. Do not use the Rust `windows_subsystem = "windows"` attribute for the release binary.
 
@@ -2394,7 +2394,7 @@ Rust backend owns lifecycle and state operations.
 
 Hook payloads may contain prompts, responses, transcript paths, model names, or tool data.
 
-ArtWait must:
+ArtBreak must:
 
 - deserialize only required fields where practical;
 - never persist prompt or response text;
@@ -2474,7 +2474,7 @@ If the repository already has a small tested rotating logger, reuse it. Otherwis
 
 ## 23.3 Diagnostic output
 
-`artwait control status` should return stable JSON to the extension.
+`artbreak control status` should return stable JSON to the extension.
 
 Example:
 
@@ -2505,14 +2505,14 @@ The extension contributes only commands. It does not contribute an activity bar 
 Required commands:
 
 ```text
-ArtWait: Install / Repair Agent Hooks
-ArtWait: Remove Agent Hooks
-ArtWait: Test Window
-ArtWait: Pause...
-ArtWait: Resume
-ArtWait: Show Status
-ArtWait: Diagnose
-ArtWait: Reset Runtime State
+ArtBreak: Install / Repair Agent Hooks
+ArtBreak: Remove Agent Hooks
+ArtBreak: Test Window
+ArtBreak: Pause...
+ArtBreak: Resume
+ArtBreak: Show Status
+ArtBreak: Diagnose
+ArtBreak: Reset Runtime State
 ```
 
 Optional compatibility aliases may exist only if an earlier repository version already exposed stable command IDs.
@@ -2549,7 +2549,7 @@ Messages must be actionable and brief.
 Examples:
 
 ```text
-ArtWait is ready. Install agent hooks to enable automatic paintings.
+ArtBreak is ready. Install agent hooks to enable automatic paintings.
 ```
 
 ```text
@@ -2557,7 +2557,7 @@ Codex hooks were installed. Run /hooks in Codex to review and trust them.
 ```
 
 ```text
-ArtWait is paused until 3:45 PM.
+ArtBreak is paused until 3:45 PM.
 ```
 
 Do not repeatedly show the same setup message on every startup.
@@ -2569,7 +2569,7 @@ Do not repeatedly show the same setup message on every startup.
 Reuse the existing repository structure if it already separates these responsibilities cleanly. Otherwise use this baseline:
 
 ```text
-artwait/
+artbreak/
 ├── package.json
 ├── README.md
 ├── IMPLEMENTATION_STATUS.md
@@ -2579,10 +2579,10 @@ artwait/
 │   ├── tsconfig.json
 │   ├── resources/
 │   │   ├── darwin-arm64/
-│   │   │   ├── ArtWait.app/
+│   │   │   ├── ArtBreak.app/
 │   │   │   └── manifest.json
 │   │   └── win32-x64/
-│   │       ├── artwait.exe
+│   │       ├── artbreak.exe
 │   │       └── manifest.json
 │   ├── src/
 │   │   ├── extension.ts
@@ -2931,7 +2931,7 @@ Prove the Windows process model before building more Windows-specific behavior.
 
 Create failing Windows-only checks for:
 
-- stdin fixture parsing in `artwait.exe hook ...`;
+- stdin fixture parsing in `artbreak.exe hook ...`;
 - valid Codex neutral JSON on stdout;
 - a path containing spaces and Unicode;
 - `show --test` without a visible console;
@@ -2957,7 +2957,7 @@ Create failing Windows-only checks for:
 
 - hook stdin/stdout works in the release configuration;
 - UI mode opens with no console flash;
-- child lifetime is independent enough for the ArtWait lifecycle;
+- child lifetime is independent enough for the ArtBreak lifecycle;
 - the implementation remains one executable;
 - the Windows process model is recorded in `IMPLEMENTATION_STATUS.md`.
 
@@ -3282,7 +3282,7 @@ Run the complete matrix in Section 15.9.
 - validate Windows paths containing spaces and Unicode;
 - run Codex `/hooks` trust flow;
 - verify unrelated hooks still run;
-- remove ArtWait and verify unrelated hooks remain.
+- remove ArtBreak and verify unrelated hooks remain.
 
 ### Exit criteria
 
@@ -3371,7 +3371,7 @@ Produce distributable `darwin-arm64` and `win32-x64` VSIX artifacts containing t
 ### Windows work
 
 - build `x86_64-pc-windows-msvc` on a native Windows runner;
-- code-sign and timestamp `artwait.exe`;
+- code-sign and timestamp `artbreak.exe`;
 - verify Authenticode signature before and after VSIX packaging;
 - package `win32-x64` VSIX;
 - verify no console flash;
@@ -3582,7 +3582,7 @@ Root commands should delegate rather than duplicate package logic.
 | Hooks config | install twice | no duplicates |
 | Hooks config | unrelated hooks | preserved |
 | Hooks config | malformed file | no overwrite |
-| Hooks config | remove | ArtWait only removed |
+| Hooks config | remove | ArtBreak only removed |
 | Catalog | non-public-domain | rejected |
 | Catalog | non-painting | rejected |
 | Catalog | invalid image host | rejected |
@@ -3615,7 +3615,7 @@ Recovery mechanisms:
 - SessionEnd cleanup;
 - lease expiry when VS Code closes;
 - 12-hour stale marker cleanup;
-- `ArtWait: Reset Runtime State`.
+- `ArtBreak: Reset Runtime State`.
 
 Do not add process inspection or transcript polling in the first release.
 
@@ -3656,7 +3656,7 @@ Skip bounded candidates, then show the minimal error message. Keep navigation us
 ## 31.7 Codex hooks untrusted
 
 - Codex skips them;
-- ArtWait reports the trust instruction;
+- ArtBreak reports the trust instruction;
 - Test Window remains available;
 - do not misdiagnose this as companion failure.
 
@@ -3673,7 +3673,7 @@ Skip bounded candidates, then show the minimal error message. Keep navigation us
 ## 31.9 Windows executable is locked during update
 
 - keep the current signed executable;
-- retain the verified `artwait.next.exe` and pending manifest;
+- retain the verified `artbreak.next.exe` and pending manifest;
 - finalize later when no process holds the file;
 - do not delete the working version;
 - do not kill active work solely for update completion.
@@ -3725,14 +3725,14 @@ The 200-record metadata catalog should remain small. Do not retain multiple full
 ## 33.1 First artifacts
 
 ```text
-artwait-<version>-darwin-arm64.vsix
-artwait-<version>-win32-x64.vsix
+artbreak-<version>-darwin-arm64.vsix
+artbreak-<version>-win32-x64.vsix
 ```
 
 The macOS package contains:
 
 - bundled extension JavaScript;
-- signed and notarized `ArtWait.app`;
+- signed and notarized `ArtBreak.app`;
 - matching manifest;
 - no artwork image binaries;
 - no development dependencies.
@@ -3740,7 +3740,7 @@ The macOS package contains:
 The Windows package contains:
 
 - bundled extension JavaScript;
-- signed and timestamped `artwait.exe`;
+- signed and timestamped `artbreak.exe`;
 - matching manifest;
 - no fixed WebView2 runtime;
 - no artwork image binaries;
@@ -3906,7 +3906,7 @@ Do not proceed to the next loop while relevant tests are failing.
 
 - An external terminal in the same open VS Code workspace may match the lease.
 - Claude user interrupt may leave a marker until manual or stale cleanup.
-- ArtWait does not know about work that starts entirely while paused.
+- ArtBreak does not know about work that starts entirely while paused.
 - Pause expiry does not force a mid-turn display for work that began while paused.
 - Images are unavailable offline unless already cached by the platform.
 - The first release treats foreground `Stop` as the end of the displayed wait period and does not separately track Claude background tasks or recurring session cron work.
@@ -3925,7 +3925,7 @@ These limitations must be documented rather than hidden behind extra infrastruct
 Create or update `IMPLEMENTATION_STATUS.md` using this structure:
 
 ```markdown
-# ArtWait Implementation Status
+# ArtBreak Implementation Status
 
 ## Baseline
 - Repository commit:

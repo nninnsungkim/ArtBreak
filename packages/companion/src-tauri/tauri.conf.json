@@ -1,7 +1,7 @@
 {
-  "productName": "ArtWait",
+  "productName": "ArtBreak",
   "version": "0.2.7",
-  "identifier": "com.artwait.app",
+  "identifier": "com.artbreak.app",
   "build": {
     "beforeDevCommand": "node ../scripts/sync-catalog.mjs",
     "beforeBuildCommand": "node ../scripts/sync-catalog.mjs",
@@ -15,7 +15,7 @@
     "copyright": "",
     "category": "DeveloperTool",
     "shortDescription": "Display public-domain paintings while AI agents work",
-    "longDescription": "ArtWait displays one public-domain painting from The Met when Claude Code or Codex is working for at least two seconds.",
+    "longDescription": "ArtBreak displays one public-domain painting from The Met when Claude Code or Codex is working for at least two seconds.",
     "windows": {
       "wix": {
         "language": "en-US"
@@ -29,7 +29,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "ArtWait",
+        "title": "ArtBreak",
         "width": 1200,
         "height": 800,
         "center": true,

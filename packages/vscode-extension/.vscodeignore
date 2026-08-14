@@ -14,5 +14,5 @@ run-tests.mjs
 node_modules/**
 scripts/**
 
-# Platform-specific ArtWait binaries under bin/ are runtime dependencies and
+# Platform-specific ArtBreak binaries under bin/ are runtime dependencies and
 # intentionally remain in each Marketplace package.

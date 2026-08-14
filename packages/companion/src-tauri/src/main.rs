@@ -21,8 +21,8 @@ mod pause;
 mod dismiss;
 
 #[derive(Parser)]
-#[command(name = "artwait")]
-#[command(about = "ArtWait - Display public-domain paintings while AI agents work")]
+#[command(name = "artbreak")]
+#[command(about = "ArtBreak - Display public-domain paintings while AI agents work")]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -55,7 +55,7 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum ControlAction {
-    /// Pause ArtWait
+    /// Pause ArtBreak
     Pause {
         /// Number of hours
         #[arg(long)]
@@ -67,7 +67,7 @@ enum ControlAction {
         #[arg(long)]
         current_leases: bool,
     },
-    /// Resume ArtWait
+    /// Resume ArtBreak
     Resume,
     /// Show status
     Status,
@@ -301,7 +301,7 @@ fn handle_show(test: bool, reason: Option<String>) {
     // Check if paused
     if !test {
         if let Ok(true) = pause::is_paused(now.timestamp_millis()) {
-            println!("ArtWait is paused");
+            println!("ArtBreak is paused");
             return;
         }
 
@@ -352,7 +352,7 @@ fn handle_show(test: bool, reason: Option<String>) {
     // test) window.
     let ui_lock = acquire_ui_lock();
     if ui_lock.is_none() {
-        println!("ArtWait is already visible");
+        println!("ArtBreak is already visible");
         return;
     }
 

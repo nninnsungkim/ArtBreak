@@ -1,34 +1,34 @@
-/// Platform-specific path resolution for ArtWait state directories.
+/// Platform-specific path resolution for ArtBreak state directories.
 ///
 /// This module mirrors the TypeScript implementation in packages/vscode-extension/src/platform/paths.ts
 
 use std::path::PathBuf;
 
-/// Returns the ArtWait state root directory based on the current platform.
+/// Returns the ArtBreak state root directory based on the current platform.
 ///
-/// - macOS: ~/.artwait
-/// - Windows: %LOCALAPPDATA%\ArtWait
-/// - Tests: uses ARTWAIT_HOME environment variable if set
+/// - macOS: ~/.artbreak
+/// - Windows: %LOCALAPPDATA%\ArtBreak
+/// - Tests: uses ARTBREAK_HOME environment variable if set
 pub fn get_state_root() -> Result<PathBuf, String> {
     // Test/development override
-    if let Ok(artwait_home) = std::env::var("ARTWAIT_HOME") {
-        return Ok(PathBuf::from(artwait_home));
+    if let Ok(artbreak_home) = std::env::var("ARTBREAK_HOME") {
+        return Ok(PathBuf::from(artbreak_home));
     }
 
     if cfg!(target_os = "macos") {
         let home = dirs::home_dir()
             .ok_or_else(|| "Could not determine home directory".to_string())?;
-        Ok(home.join(".artwait"))
+        Ok(home.join(".artbreak"))
     } else if cfg!(target_os = "windows") {
         let local_app_data = dirs::data_local_dir()
             .ok_or_else(|| "Could not determine LOCALAPPDATA directory".to_string())?;
-        Ok(local_app_data.join("ArtWait"))
+        Ok(local_app_data.join("ArtBreak"))
     } else {
         Err(format!("Unsupported platform: {}", std::env::consts::OS))
     }
 }
 
-/// Platform-specific paths within the ArtWait state root.
+/// Platform-specific paths within the ArtBreak state root.
 pub struct StatePaths {
     pub run: PathBuf,
     pub vscode: PathBuf,
@@ -36,7 +36,7 @@ pub struct StatePaths {
     pub state: PathBuf,
 }
 
-/// Returns platform-specific paths within the ArtWait state root.
+/// Returns platform-specific paths within the ArtBreak state root.
 pub fn get_state_paths() -> Result<StatePaths, String> {
     let root = get_state_root()?;
 
@@ -49,13 +49,15 @@ pub fn get_state_paths() -> Result<StatePaths, String> {
 }
 
 /// Normalizes a path for comparison purposes.
-/// On Windows, this performs case-insensitive normalization.
-/// On macOS, preserves case but normalizes separators.
+/// On Windows, this unifies `/` and `\` separators (a hook payload's `cwd`
+/// is not guaranteed to use the same separator style as a VS Code lease's
+/// `fsPath`) and performs case-insensitive normalization.
+/// On macOS, preserves case and separators.
 pub fn normalize_path_for_comparison(path: &PathBuf) -> String {
     let normalized = path.to_string_lossy().to_string();
 
     if cfg!(target_os = "windows") {
-        normalized.to_lowercase()
+        normalized.replace('/', "\\").to_lowercase()
     } else {
         normalized
     }
@@ -89,7 +91,7 @@ mod tests {
     #[test]
     fn test_get_state_root() {
         let root = get_state_root().unwrap();
-        assert!(root.to_string_lossy().contains("ArtWait") || root.to_string_lossy().contains(".artwait"));
+        assert!(root.to_string_lossy().contains("ArtBreak") || root.to_string_lossy().contains(".artbreak"));
     }
 
     #[test]
@@ -99,6 +101,19 @@ mod tests {
 
         if cfg!(target_os = "windows") {
             assert_eq!(normalized, normalized.to_lowercase());
+        }
+    }
+
+    #[test]
+    fn workspace_match_survives_forward_slash_cwd() {
+        // A hook payload's `cwd` is not guaranteed to use the same separator
+        // style as a VS Code lease's fsPath. On Windows a forward-slash cwd
+        // (as some agent CLIs report) previously failed to match a
+        // backslash-style lease, silently dropping every work-start event.
+        if cfg!(target_os = "windows") {
+            let target = PathBuf::from("c:/dev/project");
+            let workspace = PathBuf::from("c:\\dev\\project");
+            assert!(is_path_in_workspace(&target, &workspace));
         }
     }
 }

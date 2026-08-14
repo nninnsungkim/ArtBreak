@@ -6,7 +6,7 @@ import { Readable } from 'node:stream';
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // The Met's current Open Access export contains 5,595 works that satisfy all
-// of ArtWait's display requirements *and* are classified as paintings. Keep a
+// of ArtBreak's display requirements *and* are classified as paintings. Keep a
 // comfortably large, reproducible subset rather than mixing in other media
 // merely to reach the former 10,000-work target.
 const targetCount = 5_000;

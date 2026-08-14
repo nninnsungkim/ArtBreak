@@ -1,4 +1,4 @@
-// ArtWait UI. The bundled catalog contains 10,000 prevalidated Met works.
+// ArtBreak UI. The bundled catalog contains 10,000 prevalidated Met works.
 // The compact footer displays only source catalog fields; no descriptive copy
 // is generated and no LLM is used.
 
@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initNavigator(catalogData.artworks, catalogData.highlightObjectIDs);
         await updateArtwork();
     } catch (error) {
-        console.error('Unable to initialize ArtWait:', error);
+        console.error('Unable to initialize ArtBreak:', error);
         document.getElementById('artwork-title').textContent = 'Artwork catalog unavailable';
         return;
     }

@@ -18,18 +18,18 @@ describe('state/lease', () => {
 
     beforeEach(async () => {
         // Create temp directory for tests
-        testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'artwait-test-'));
-        originalHome = process.env.ARTWAIT_HOME;
-        process.env.ARTWAIT_HOME = testDir;
+        testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'artbreak-test-'));
+        originalHome = process.env.ARTBREAK_HOME;
+        process.env.ARTBREAK_HOME = testDir;
     });
 
     afterEach(async () => {
         // Cleanup
         await fs.rm(testDir, { recursive: true, force: true });
         if (originalHome) {
-            process.env.ARTWAIT_HOME = originalHome;
+            process.env.ARTBREAK_HOME = originalHome;
         } else {
-            delete process.env.ARTWAIT_HOME;
+            delete process.env.ARTBREAK_HOME;
         }
     });
 

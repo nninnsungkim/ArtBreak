@@ -1,8 +1,8 @@
 [package]
-name = "artwait"
+name = "artbreak"
 version = "0.2.7"
-description = "ArtWait companion desktop application"
-authors = ["ArtWait Contributors"]
+description = "ArtBreak companion desktop application"
+authors = ["ArtBreak Contributors"]
 license = "MIT"
 repository = ""
 edition = "2021"

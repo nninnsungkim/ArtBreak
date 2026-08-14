@@ -10,37 +10,37 @@ import {
 
 describe('platform/paths', () => {
     describe('getStateRoot', () => {
-        it('should return ARTWAIT_HOME if set', () => {
-            const originalHome = process.env.ARTWAIT_HOME;
-            process.env.ARTWAIT_HOME = '/tmp/artwait-test';
+        it('should return ARTBREAK_HOME if set', () => {
+            const originalHome = process.env.ARTBREAK_HOME;
+            process.env.ARTBREAK_HOME = '/tmp/artbreak-test';
 
             const root = getStateRoot();
-            assert.equal(root, '/tmp/artwait-test');
+            assert.equal(root, '/tmp/artbreak-test');
 
             // Restore
             if (originalHome) {
-                process.env.ARTWAIT_HOME = originalHome;
+                process.env.ARTBREAK_HOME = originalHome;
             } else {
-                delete process.env.ARTWAIT_HOME;
+                delete process.env.ARTBREAK_HOME;
             }
         });
 
-        it('should return platform-specific path when ARTWAIT_HOME not set', () => {
-            const originalHome = process.env.ARTWAIT_HOME;
-            delete process.env.ARTWAIT_HOME;
+        it('should return platform-specific path when ARTBREAK_HOME not set', () => {
+            const originalHome = process.env.ARTBREAK_HOME;
+            delete process.env.ARTBREAK_HOME;
 
             const root = getStateRoot();
             const platform = os.platform();
 
             if (platform === 'darwin') {
-                assert.ok(root.endsWith('.artwait'));
+                assert.ok(root.endsWith('.artbreak'));
             } else if (platform === 'win32') {
-                assert.ok(root.includes('ArtWait'));
+                assert.ok(root.includes('ArtBreak'));
             }
 
             // Restore
             if (originalHome) {
-                process.env.ARTWAIT_HOME = originalHome;
+                process.env.ARTBREAK_HOME = originalHome;
             }
         });
     });

@@ -1,9 +1,9 @@
-# ArtWait
+# ArtBreak
 
 **Your AI is working. Don’t fill the pause—look at a work of art.**
 
-ArtWait turns waiting into a brief moment with a painting. Install it and one
-work opens right away. When Claude Code or Codex is working, ArtWait brings
+ArtBreak turns waiting into a brief moment with a painting. Install it and one
+work opens right away. When Claude Code or Codex is working, ArtBreak brings
 another work to your desktop when there is time to look.
 
 No account. No API key. No separate app.
@@ -11,11 +11,11 @@ No account. No API key. No separate app.
 ## Don’t fill the pause
 
 A good work of art is a better place to put your attention than another tab.
-ArtWait gives it the screen for a moment, then lets you return when you are
+ArtBreak gives it the screen for a moment, then lets you return when you are
 ready.
 
 Claude Code connects automatically. Codex may ask for a one-time security
-approval before ArtWait can respond to Codex sessions.
+approval before ArtBreak can respond to Codex sessions.
 
 ## Availability and credits
 

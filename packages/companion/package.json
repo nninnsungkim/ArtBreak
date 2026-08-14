@@ -1,8 +1,8 @@
 {
-  "name": "artwait-companion",
+  "name": "artbreak-companion",
   "version": "0.2.7",
   "private": true,
-  "description": "ArtWait companion desktop application",
+  "description": "ArtBreak companion desktop application",
   "scripts": {
     "tauri": "tauri",
     "build": "tauri build",

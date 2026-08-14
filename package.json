@@ -1,8 +1,8 @@
 {
-  "name": "artwait",
+  "name": "artbreak",
   "version": "0.2.7",
   "private": true,
-  "description": "ArtWait - Display public-domain paintings while Claude Code or Codex is working",
+  "description": "ArtBreak - Display public-domain paintings while Claude Code or Codex is working",
   "workspaces": [
     "packages/vscode-extension",
     "packages/companion"
@@ -19,6 +19,6 @@
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "author": "ArtWait Contributors",
+  "author": "ArtBreak Contributors",
   "license": "MIT"
 }

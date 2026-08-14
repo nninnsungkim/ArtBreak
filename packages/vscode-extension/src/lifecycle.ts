@@ -51,7 +51,7 @@ function isRemote(): boolean {
 export async function startLease(): Promise<void> {
     // Don't create lease in remote mode
     if (isRemote()) {
-        console.log('ArtWait: Remote environment detected, not creating lease');
+        console.log('ArtBreak: Remote environment detected, not creating lease');
         return;
     }
 
@@ -87,7 +87,7 @@ export async function startLease(): Promise<void> {
         await writeLease(updatedLease);
     }, LEASE_HEARTBEAT_INTERVAL_MS);
 
-    console.log(`ArtWait: Lease created (${leaseId})`);
+    console.log(`ArtBreak: Lease created (${leaseId})`);
 }
 
 /**
@@ -101,7 +101,7 @@ export async function stopLease(): Promise<void> {
 
     if (leaseId) {
         await removeLease(leaseId);
-        console.log(`ArtWait: Lease removed (${leaseId})`);
+        console.log(`ArtBreak: Lease removed (${leaseId})`);
         leaseId = null;
     }
 }

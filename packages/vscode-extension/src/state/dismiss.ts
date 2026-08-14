@@ -5,7 +5,7 @@ import { getStatePaths } from '../platform/paths';
 /**
  * Dismiss-until-idle state schema.
  *
- * When present, ArtWait should not display during the current continuous busy period.
+ * When present, ArtBreak should not display during the current continuous busy period.
  * This state is removed when the active marker count returns to zero.
  */
 export interface DismissState {

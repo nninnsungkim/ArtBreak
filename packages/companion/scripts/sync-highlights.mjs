@@ -8,7 +8,7 @@ const highlightsUrl = 'https://collectionapi.metmuseum.org/public/collection/v1/
 
 const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
 if (!Array.isArray(catalog.artworks) || catalog.artworks.length === 0) {
-    throw new Error('ArtWait catalog has no artworks to annotate.');
+    throw new Error('ArtBreak catalog has no artworks to annotate.');
 }
 
 const response = await fetch(highlightsUrl);
@@ -26,7 +26,7 @@ const highlightObjectIDs = [...new Set(result.objectIDs)]
     .filter(objectID => Number.isSafeInteger(objectID) && catalogIds.has(objectID));
 
 if (highlightObjectIDs.length === 0) {
-    throw new Error('No Met Highlights are available in the ArtWait catalog.');
+    throw new Error('No Met Highlights are available in the ArtBreak catalog.');
 }
 
 catalog.highlightSelection = {

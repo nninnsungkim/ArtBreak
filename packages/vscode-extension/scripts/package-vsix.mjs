@@ -24,9 +24,9 @@ if (target !== hostTarget()) {
     throw new Error(`This script builds native binaries only. Build ${target} in its matching CI runner.`);
 }
 
-const executable = platform() === 'win32' ? 'artwait.exe' : 'artwait';
+const executable = platform() === 'win32' ? 'artbreak.exe' : 'artbreak';
 const isMacOS = platform() === 'darwin';
-const macAppBundle = 'ArtWait.app';
+const macAppBundle = 'ArtBreak.app';
 // The Tauri frontend references versioned runtime files. Keep those copies in
 // sync before compiling so a VSIX always carries the current UI.
 execFileSync('node', [companionSyncScript], { cwd: companionRoot, stdio: 'inherit' });
@@ -60,9 +60,9 @@ if (!existsSync(sourceExecutable)) {
 
 if (isMacOS) {
     // A release pipeline can provide a Developer ID identity through
-    // ARTWAIT_MACOS_SIGNING_IDENTITY. CI without that credential uses an
+    // ARTBREAK_MACOS_SIGNING_IDENTITY. CI without that credential uses an
     // ad-hoc signature so macOS can still verify the bundle's integrity.
-    const signingIdentity = process.env.ARTWAIT_MACOS_SIGNING_IDENTITY?.trim() || '-';
+    const signingIdentity = process.env.ARTBREAK_MACOS_SIGNING_IDENTITY?.trim() || '-';
     execFileSync('codesign', ['--force', '--deep', '--sign', signingIdentity, source], {
         cwd: companionRoot,
         stdio: 'inherit'
@@ -72,9 +72,9 @@ if (isMacOS) {
         stdio: 'inherit'
     });
 
-    const appleId = process.env.ARTWAIT_APPLE_ID?.trim();
-    const appSpecificPassword = process.env.ARTWAIT_APPLE_APP_PASSWORD?.trim();
-    const appleTeamId = process.env.ARTWAIT_APPLE_TEAM_ID?.trim();
+    const appleId = process.env.ARTBREAK_APPLE_ID?.trim();
+    const appSpecificPassword = process.env.ARTBREAK_APPLE_APP_PASSWORD?.trim();
+    const appleTeamId = process.env.ARTBREAK_APPLE_TEAM_ID?.trim();
     if (appleId && appSpecificPassword && appleTeamId) {
         const notarizationArchive = join(
             companionRoot,

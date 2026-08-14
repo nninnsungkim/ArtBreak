@@ -16,8 +16,8 @@ import { getInstalledExecutablePath } from '../../src/platform/paths';
 describe('platform/companion', () => {
     it('uses the complete signed Tauri app bundle on macOS', () => {
         assert.deepEqual(companionLayout('darwin'), {
-            payload: 'ArtWait.app',
-            executable: path.join('ArtWait.app', 'Contents', 'MacOS', 'artwait')
+            payload: 'ArtBreak.app',
+            executable: path.join('ArtBreak.app', 'Contents', 'MacOS', 'artbreak')
         });
         assert.equal(platformTargetFor('darwin', 'x64'), 'darwin-x64');
         assert.equal(platformTargetFor('darwin', 'arm64'), 'darwin-arm64');
@@ -25,13 +25,13 @@ describe('platform/companion', () => {
     });
 
     it('installs the verified bundled executable at a stable hook path', async () => {
-        const root = await mkdtemp(path.join(os.tmpdir(), 'artwait-companion-'));
+        const root = await mkdtemp(path.join(os.tmpdir(), 'artbreak-companion-'));
         const extensionPath = path.join(root, 'extension');
-        const originalHome = process.env.ARTWAIT_HOME;
-        process.env.ARTWAIT_HOME = path.join(root, 'state');
+        const originalHome = process.env.ARTBREAK_HOME;
+        process.env.ARTBREAK_HOME = path.join(root, 'state');
 
         try {
-            const executable = process.platform === 'win32' ? 'artwait.exe' : 'artwait';
+            const executable = process.platform === 'win32' ? 'artbreak.exe' : 'artbreak';
             const payload = Buffer.from('test companion payload');
             const bundledDirectory = path.join(extensionPath, 'bin', platformTarget());
             await mkdir(bundledDirectory, { recursive: true });
@@ -56,9 +56,9 @@ describe('platform/companion', () => {
             assert.equal(second.pending, false);
         } finally {
             if (originalHome) {
-                process.env.ARTWAIT_HOME = originalHome;
+                process.env.ARTBREAK_HOME = originalHome;
             } else {
-                delete process.env.ARTWAIT_HOME;
+                delete process.env.ARTBREAK_HOME;
             }
             await rm(root, { recursive: true, force: true });
         }

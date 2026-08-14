@@ -1,7 +1,7 @@
 /**
  * Hook configuration installer for Claude Code and Codex.
  *
- * This module safely installs, updates, and removes ArtWait hooks
+ * This module safely installs, updates, and removes ArtBreak hooks
  * from Claude and Codex configuration files.
  */
 
@@ -77,31 +77,35 @@ function getCodexHooksPath(): string {
 }
 
 /**
- * Checks if a hook entry is an ArtWait hook.
+ * Checks if a hook entry is an ArtBreak hook.
  */
-function isArtWaitHook(entry: ClaudeHookEntry): boolean {
+function isArtBreakHook(entry: ClaudeHookEntry): boolean {
     const command = [entry.command, ...(entry.args || [])].join(' ');
     // Claude Code's current schema ignores the old `args` field. Earlier
-    // ArtWait installs therefore persisted as a bare `node` command, which
+    // ArtBreak installs therefore persisted as a bare `node` command, which
     // makes Claude attempt to parse hook JSON as JavaScript. A bare Node
     // command with our two-second timeout cannot be a functional hook, so it
     // is safe to migrate alongside the known legacy handler form.
-    const legacyBrokenArtWaitHook = entry.command === 'node' &&
+    const legacyBrokenArtBreakHook = entry.command === 'node' &&
         entry.timeout === 2 &&
         (!entry.args || entry.args.length === 0);
-    return legacyBrokenArtWaitHook ||
+    return legacyBrokenArtBreakHook ||
         (entry.command === 'node' && (entry.args || []).some(arg => arg.includes('hook-handler'))) ||
-        (/artwait(?:\.exe)?(?=["'\s]|$)/i.test(command) && /\bhook\s+claude\b/i.test(command));
+        // Match both the current binary name and ArtWait, its pre-rename name,
+        // so upgrading from an ArtWait install cleanly replaces the old entry
+        // instead of leaving it orphaned alongside the new ArtBreak one.
+        (/art(?:break|wait)(?:\.exe)?(?=["'\s]|$)/i.test(command) && /\bhook\s+claude\b/i.test(command));
 }
 
 /**
- * Checks whether a Codex command hook belongs to ArtWait.
+ * Checks whether a Codex command hook belongs to ArtBreak.
  */
-function isArtWaitCodexHook(entry: CodexHookEntry): boolean {
+function isArtBreakCodexHook(entry: CodexHookEntry): boolean {
     const command = [entry.command, entry.commandWindows]
         .filter((value): value is string => typeof value === 'string')
         .join(' ');
-    return /artwait(?:\.exe)?(?=["'\s]|$)/i.test(command) && /\bhook\s+codex\b/i.test(command);
+    // See isArtBreakHook: also match the pre-rename ArtWait command form.
+    return /art(?:break|wait)(?:\.exe)?(?=["'\s]|$)/i.test(command) && /\bhook\s+codex\b/i.test(command);
 }
 
 /**
@@ -123,7 +127,7 @@ function quoteClaudeCommandPath(value: string): string {
 }
 
 /**
- * Creates an ArtWait hook entry for Claude Code.
+ * Creates an ArtBreak hook entry for Claude Code.
  */
 function createClaudeHookEntry(
     companionPath: string,
@@ -137,7 +141,7 @@ function createClaudeHookEntry(
 }
 
 /**
- * Creates an ArtWait command hook for Codex.
+ * Creates an ArtBreak command hook for Codex.
  */
 function createCodexHookEntry(
     companionPath: string,
@@ -156,7 +160,7 @@ function createCodexHookEntry(
 }
 
 /**
- * Installs ArtWait hooks for Claude Code.
+ * Installs ArtBreak hooks for Claude Code.
  */
 export async function installClaudeHooks(companionPath: string, dryRun = false): Promise<{
     success: boolean;
@@ -164,7 +168,7 @@ export async function installClaudeHooks(companionPath: string, dryRun = false):
 }> {
     try {
         if (!fsSync.existsSync(companionPath)) {
-            throw new Error('The packaged ArtWait companion is missing');
+            throw new Error('The packaged ArtBreak companion is missing');
         }
         const settingsPath = getClaudeSettingsPath();
 
@@ -186,15 +190,15 @@ export async function installClaudeHooks(companionPath: string, dryRun = false):
         }
 
         // Claude Code 2.1.x validates hook event names strictly. StopFailure
-        // was used by an older ArtWait configuration but is no longer a
-        // supported Claude event, so remove only ArtWait's legacy entries
+        // was used by an older ArtBreak configuration but is no longer a
+        // supported Claude event, so remove only ArtBreak's legacy entries
         // before adding the current event set.
         const legacyEventNames = ['StopFailure'];
         for (const eventName of legacyEventNames) {
             const matchers = settings.hooks[eventName];
             if (!matchers) continue;
             for (const matcher of matchers) {
-                matcher.hooks = matcher.hooks.filter(hook => !isArtWaitHook(hook));
+                matcher.hooks = matcher.hooks.filter(hook => !isArtBreakHook(hook));
             }
             const remaining = matchers.filter(matcher => matcher.hooks.length > 0);
             if (remaining.length === 0) {
@@ -216,10 +220,10 @@ export async function installClaudeHooks(companionPath: string, dryRun = false):
                 settings.hooks![event.name] = [];
             }
 
-            // Replace prior ArtWait entries without touching other hook providers.
+            // Replace prior ArtBreak entries without touching other hook providers.
             for (const matcher of settings.hooks![event.name]) {
                 matcher.hooks = matcher.hooks.filter(
-                    hook => !isArtWaitHook(hook)
+                    hook => !isArtBreakHook(hook)
                 );
             }
 
@@ -228,7 +232,7 @@ export async function installClaudeHooks(companionPath: string, dryRun = false):
                 matcher => matcher.hooks.length > 0
             );
 
-            // Add new ArtWait hook
+            // Add new ArtBreak hook
             const hookEntry = createClaudeHookEntry(companionPath, event.arg);
             settings.hooks![event.name].push({
                 hooks: [hookEntry]
@@ -237,7 +241,7 @@ export async function installClaudeHooks(companionPath: string, dryRun = false):
 
         const changed = JSON.stringify(settings) !== originalSettings;
         if (!dryRun && changed) {
-            // Preserve the user's prior configuration only when ArtWait is
+            // Preserve the user's prior configuration only when ArtBreak is
             // actually making a change. Activation runs on every VS Code
             // start, so unconditional backups would quickly become noise.
             if (existing) {
@@ -265,7 +269,7 @@ export async function installClaudeHooks(companionPath: string, dryRun = false):
 }
 
 /**
- * Removes ArtWait hooks from Claude Code.
+ * Removes ArtBreak hooks from Claude Code.
  */
 export async function removeClaudeHooks(): Promise<{
     success: boolean;
@@ -290,13 +294,13 @@ export async function removeClaudeHooks(): Promise<{
         );
         await atomicWriteJSON(backupPath, settings);
 
-        // Remove ArtWait hooks
+        // Remove ArtBreak hooks
         let removed = 0;
         for (const eventName of Object.keys(settings.hooks)) {
             for (const matcher of settings.hooks[eventName]) {
                 const beforeCount = matcher.hooks.length;
                 matcher.hooks = matcher.hooks.filter(
-                    hook => !isArtWaitHook(hook)
+                    hook => !isArtBreakHook(hook)
                 );
                 removed += beforeCount - matcher.hooks.length;
             }
@@ -311,7 +315,7 @@ export async function removeClaudeHooks(): Promise<{
 
         return {
             success: true,
-            message: `Removed ${removed} ArtWait hook(s) from Claude Code`
+            message: `Removed ${removed} ArtBreak hook(s) from Claude Code`
         };
     } catch (error) {
         return {
@@ -322,9 +326,9 @@ export async function removeClaudeHooks(): Promise<{
 }
 
 /**
- * Installs ArtWait hooks for Codex.
+ * Installs ArtBreak hooks for Codex.
  *
- * Codex merges hook sources, so this edits only ArtWait command handlers and
+ * Codex merges hook sources, so this edits only ArtBreak command handlers and
  * preserves every other user-configured hook and matcher.
  */
 export async function installCodexHooks(companionPath: string, dryRun = false): Promise<{
@@ -333,7 +337,7 @@ export async function installCodexHooks(companionPath: string, dryRun = false): 
 }> {
     try {
         if (!fsSync.existsSync(companionPath)) {
-            throw new Error('The packaged ArtWait companion is missing');
+            throw new Error('The packaged ArtBreak companion is missing');
         }
         const hooksPath = getCodexHooksPath();
         const codexDir = path.dirname(hooksPath);
@@ -344,7 +348,7 @@ export async function installCodexHooks(companionPath: string, dryRun = false): 
         // A malformed existing hooks file must be reported, never replaced.
         const existing = await readJSON<CodexSettings>(hooksPath);
         const settings: CodexSettings = existing || {
-            description: 'ArtWait lifecycle hooks.'
+            description: 'ArtBreak lifecycle hooks.'
         };
 
         const originalSettings = JSON.stringify(settings);
@@ -360,7 +364,7 @@ export async function installCodexHooks(companionPath: string, dryRun = false): 
         for (const event of events) {
             const matchers = settings.hooks[event.name] || [];
             for (const matcher of matchers) {
-                matcher.hooks = (matcher.hooks || []).filter(hook => !isArtWaitCodexHook(hook));
+                matcher.hooks = (matcher.hooks || []).filter(hook => !isArtBreakCodexHook(hook));
             }
             settings.hooks[event.name] = matchers.filter(matcher => (matcher.hooks || []).length > 0);
             settings.hooks[event.name].push({
@@ -382,8 +386,8 @@ export async function installCodexHooks(companionPath: string, dryRun = false): 
         return {
             success: true,
             message: changed
-                ? `Codex hooks ${dryRun ? 'would be ' : ''}installed at ${hooksPath}. Review and trust ArtWait in Codex /hooks before first use.`
-                : `Codex hooks are already installed at ${hooksPath}. Review and trust ArtWait in Codex /hooks before first use.`
+                ? `Codex hooks ${dryRun ? 'would be ' : ''}installed at ${hooksPath}. Review and trust ArtBreak in Codex /hooks before first use.`
+                : `Codex hooks are already installed at ${hooksPath}. Review and trust ArtBreak in Codex /hooks before first use.`
         };
     } catch (error) {
         return {
@@ -394,7 +398,7 @@ export async function installCodexHooks(companionPath: string, dryRun = false): 
 }
 
 /**
- * Removes only ArtWait entries from Codex's hooks file.
+ * Removes only ArtBreak entries from Codex's hooks file.
  */
 export async function removeCodexHooks(): Promise<{
     success: boolean;
@@ -416,7 +420,7 @@ export async function removeCodexHooks(): Promise<{
             const matchers = settings.hooks[eventName];
             for (const matcher of matchers) {
                 const hooks = matcher.hooks || [];
-                const filteredHooks = hooks.filter(hook => !isArtWaitCodexHook(hook));
+                const filteredHooks = hooks.filter(hook => !isArtBreakCodexHook(hook));
                 removed += hooks.length - filteredHooks.length;
                 matcher.hooks = filteredHooks;
             }
@@ -428,13 +432,13 @@ export async function removeCodexHooks(): Promise<{
 
         if (Object.keys(settings.hooks).length === 0) {
             delete settings.hooks;
-            if (settings.description === 'ArtWait lifecycle hooks.') {
+            if (settings.description === 'ArtBreak lifecycle hooks.') {
                 delete settings.description;
             }
         }
 
         await atomicWriteJSON(hooksPath, settings);
-        return { success: true, message: `Removed ${removed} ArtWait hook(s) from Codex` };
+        return { success: true, message: `Removed ${removed} ArtBreak hook(s) from Codex` };
     } catch (error) {
         return {
             success: false,
@@ -461,7 +465,7 @@ export async function getHookStatus(): Promise<{
         if (settings?.hooks) {
             for (const matchers of Object.values(settings.hooks)) {
                 for (const matcher of matchers) {
-                    if (matcher.hooks.some(h => isArtWaitHook(h))) {
+                    if (matcher.hooks.some(h => isArtBreakHook(h))) {
                         claudeInstalled = true;
                         break;
                     }
@@ -479,7 +483,7 @@ export async function getHookStatus(): Promise<{
         if (settings?.hooks) {
             for (const matchers of Object.values(settings.hooks)) {
                 for (const matcher of matchers) {
-                    if ((matcher.hooks || []).some(isArtWaitCodexHook)) {
+                    if ((matcher.hooks || []).some(isArtBreakCodexHook)) {
                         codexInstalled = true;
                         break;
                     }
