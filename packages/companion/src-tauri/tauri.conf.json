@@ -1,10 +1,10 @@
 {
   "productName": "ArtBreak",
   "version": "0.2.7",
-  "identifier": "com.artbreak.app",
+  "identifier": "com.artbreak.desktop",
   "build": {
-    "beforeDevCommand": "node ../scripts/sync-catalog.mjs",
-    "beforeBuildCommand": "node ../scripts/sync-catalog.mjs",
+    "beforeDevCommand": "node ./scripts/sync-catalog.mjs",
+    "beforeBuildCommand": "node ./scripts/sync-catalog.mjs",
     "frontendDist": "../ui"
   },
   "bundle": {
