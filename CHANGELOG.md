@@ -19,7 +19,7 @@
   still recognizes and replaces hooks left by a pre-rename ArtWait install,
   so upgrading cleans up the old entry automatically instead of leaving it
   orphaned. The VS Code Marketplace publisher account is unchanged
-  (`artwait`); only the extension name changes to `artbreak-vscode`.
+  (`artwait`); only the extension name changes to `artbreak`.
 - Fix garbled Codex status text in `ArtBreak: Check Hook Status`.
 - Fix `ArtBreak: Test Window` bypassing the single-instance lock: it could
   open a second visible window while an agent-triggered window was already

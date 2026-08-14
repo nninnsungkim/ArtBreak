@@ -52,12 +52,12 @@ jobs:
           security import "$certificate_path" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_path"
           security list-keychain -d user -s "$keychain_path"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$keychain_path"
-      - run: npm run typecheck --workspace artbreak-vscode
-      - run: npm run lint --workspace artbreak-vscode
-      - run: npm run test:run --workspace artbreak-vscode
+      - run: npm run typecheck --workspace artbreak
+      - run: npm run lint --workspace artbreak
+      - run: npm run test:run --workspace artbreak
       - run: cargo test
         working-directory: packages/companion/src-tauri
-      - run: npm run package:vsix --workspace artbreak-vscode -- ${{ matrix.target }}
+      - run: npm run package:vsix --workspace artbreak -- ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
           name: artbreak-${{ matrix.target }}

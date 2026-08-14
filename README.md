@@ -72,11 +72,11 @@ with an LLM.
 ## Development and packaging
 
 ```powershell
-npm run typecheck --workspace=artbreak-vscode
-npm run lint --workspace=artbreak-vscode
-npm run test:run --workspace=artbreak-vscode
+npm run typecheck --workspace=artbreak
+npm run lint --workspace=artbreak
+npm run test:run --workspace=artbreak
 cd packages/companion/src-tauri; cargo test
-npm run package:vsix --workspace=artbreak-vscode
+npm run package:vsix --workspace=artbreak
 ```
 
 The packaging command creates the native release payload, produces an
@@ -99,7 +99,7 @@ not a public-release Mac package.
 
 ArtBreak is a rename of the previously published ArtWait extension. The old
 listing (publisher `artwait`, extension `artwait-vscode`) remains published
-at version 0.2.4 under its old name; ArtBreak (`artwait.artbreak-vscode`,
+at version 0.2.4 under its old name; ArtBreak (`artwait.artbreak`,
 same publisher account) has not been published yet. Version 0.2.7 is its
 first upload candidate: it carries the rename plus fixes to the Codex
 work-start path, a reliable-activation regression, a Windows work-start

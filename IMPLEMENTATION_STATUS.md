@@ -24,15 +24,15 @@ API key, server, LLM, or separate installer is required.
 | Stable companion path and updates | Implemented for Windows and macOS | Windows uses `%LOCALAPPDATA%\ArtBreak\app\artbreak.exe`; macOS installs the complete `~/.artbreak/app/ArtBreak.app` bundle. Both verify the embedded executable hash before a staged, rollback-safe payload swap. |
 | macOS packaging | Built and verified in native CI for `darwin-arm64`; `darwin-x64` not yet attempted | The package script builds a Tauri `ArtBreak.app` bundle on its native macOS host and embeds it in the matching VSIX. Two real bugs were found and fixed by this first real native-CI run (Windows packaging never exercises this code path, so neither had been caught before): (1) `beforeDevCommand`/`beforeBuildCommand` in `tauri.conf.json` used `../scripts/sync-catalog.mjs`, which Tauri resolves relative to the directory `tauri` is invoked from (`packages/companion/`), not `src-tauri/`; it pointed at a nonexistent path and failed every `tauri build` with `MODULE_NOT_FOUND`. Fixed to `./scripts/sync-catalog.mjs`. (2) The bundle `identifier` was `com.artbreak.app`, which Tauri itself warns against (conflicts with the `.app` bundle extension); changed to `com.artbreak.desktop`. A companion install unit test also had a fixture bug: it wrote a flat file for the bundled payload/manifest on every platform, but `companionLayout('darwin')` expects a nested `ArtBreak.app/Contents/MacOS/artbreak` bundle, so `readBundledManifest()` rejected it as invalid on macOS; the fixture now derives its shape from `companionLayout()` directly. With all three fixed, GitHub Actions run [31762065364](https://github.com/nninnsungkim/ArtBreak/actions/runs/31762065364) built `darwin-arm64` successfully (ad-hoc signed, no Developer ID configured) and uploaded `artbreak-darwin-arm64` (2,771,606 bytes) as a workflow artifact. `darwin-x64` queued for its `macos-13` runner for 15+ minutes without starting (GitHub runner availability, not a code issue) and was not waited on further; since it runs the identical fixed pipeline, it is expected to succeed whenever it gets a runner. |
 | First-run display | Implemented and acceptance-tested | The extension schedules one immediate welcome work on its first activation. It bypasses agent hooks but respects ArtBreak pause state and the normal single-window lock. A clean VS Code profile opened the artwork window automatically. |
-| Windows VSIX | Built and checked | `artbreak-vscode-win32-x64-0.2.7.vsix`, 2,711,443 bytes, SHA-256 `69506f82ea6c9a8dbe2660c3defcb8955ec6d3b0d1c948b4e06097c67083693e`. Its manifest activates with `*`, id `artwait.artbreak-vscode`, and bundles `bin/win32-x64/artbreak.exe`. Packaging also fixed a `.vscodeignore` gap that let a stale `tsc -p ./tsconfig.test.json` output tree (`out/src/**`) leak into earlier local packages; this archive has no such duplicate files (32 files, 2.59 MB unpacked). CI's own `win32-x64` build from the same commit (run 31762065364) succeeded and uploaded a matching `artbreak-win32-x64` artifact (2,708,222 bytes). |
+| Windows VSIX | Built and checked | `artbreak-win32-x64-0.2.7.vsix`, 2,711,443 bytes, SHA-256 `69506f82ea6c9a8dbe2660c3defcb8955ec6d3b0d1c948b4e06097c67083693e`. Its manifest activates with `*`, id `artwait.artbreak`, and bundles `bin/win32-x64/artbreak.exe`. Packaging also fixed a `.vscodeignore` gap that let a stale `tsc -p ./tsconfig.test.json` output tree (`out/src/**`) leak into earlier local packages; this archive has no such duplicate files (32 files, 2.59 MB unpacked). CI's own `win32-x64` build from the same commit (run 31762065364) succeeded and uploaded a matching `artbreak-win32-x64` artifact (2,708,222 bytes). |
 
 ## Latest local verification
 
-- `npm run test:run --workspace=artbreak-vscode` — passed.
-- `npm run lint --workspace=artbreak-vscode` — passed.
-- `npm run typecheck --workspace=artbreak-vscode` — passed.
+- `npm run test:run --workspace=artbreak` — passed.
+- `npm run lint --workspace=artbreak` — passed.
+- `npm run typecheck --workspace=artbreak` — passed.
 - `cargo test` — 4 passed.
-- `npm run package:vsix --workspace=artbreak-vscode` — passed.
+- `npm run package:vsix --workspace=artbreak` — passed.
 - Stable-path Test Window rendered the magnifier in the artwork's lower right.
 - Fresh Test Window accepted Ctrl + wheel/trackpad scroll and `Ctrl + Plus` to open the zoom view.
 - Loaded image accepted Ctrl-drag and enlarged visibly.
@@ -56,7 +56,7 @@ API key, server, LLM, or separate installer is required.
 
 ## Release blockers still open
 
-1. The `artwait` publisher account is public, and it has version 0.2.4 of the pre-rename `artwait-vscode` extension already published. `artbreak-vscode` (this rename) has never been published under that same account and needs its own first upload. The publisher account is not authenticated in this environment, so the 0.2.7 Windows VSIX must be uploaded from the Publisher management page (or through an authenticated publishing credential). Decide separately whether to deprecate/unlist the old `artwait-vscode` listing once `artbreak-vscode` is live.
+1. The `artwait` publisher account is public, and it has version 0.2.4 of the pre-rename `artwait-vscode` extension already published. `artbreak` (this rename) has never been published under that same account and needs its own first upload. The publisher account is not authenticated in this environment, so the 0.2.7 Windows VSIX must be uploaded from the Publisher management page (or through an authenticated publishing credential). Decide separately whether to deprecate/unlist the old `artwait-vscode` listing once `artbreak` is live.
 2. Privacy and support URLs remain to be chosen for the public listing.
 3. `artbreak.exe` is not Authenticode-signed or timestamped. Marketplace packaging does not require it, but signing is a recommended Windows-release safeguard before broad distribution.
 4. WebView2 prerequisite/error-path checks remain open.
@@ -77,7 +77,7 @@ fields, as required.
 1. Download the `artbreak-win32-x64` and `artbreak-darwin-arm64` artifacts from
    [run 31762065364](https://github.com/nninnsungkim/ArtBreak/actions/runs/31762065364)
    and upload both as the win32-x64 and darwin-arm64 platform packages for
-   `artbreak-vscode` 0.2.7 from the Publisher management page.
+   `artbreak` 0.2.7 from the Publisher management page.
 2. Verify a Marketplace fresh install against both Claude Code and Codex on
    Windows, and at least a Test Window launch on Apple Silicon (expect one
    Gatekeeper bypass on first launch, since the build is ad-hoc signed).

@@ -24,12 +24,12 @@ stable path so a VS Code extension update does not invalidate it.
 
 ## Current artifact
 
-- `packages/vscode-extension/artbreak-vscode-win32-x64-0.1.7.vsix`
+- `packages/vscode-extension/artwait-vscode-win32-x64-0.1.7.vsix` (pre-rename name; see CHANGELOG.md 0.2.7 for the rename to ArtBreak)
 - Windows x64 only
 - Current VSIX SHA-256: `ece134a28bae5cd0529f3828c654a739b1e19c4e6d09a41e2803327e0b58fb94`
 - Includes a monochrome pixel-art frame-and-magnifier Marketplace icon.
 
-Version 0.1.4 is published as `artbreak.artbreak-vscode`; the locally built
+Version 0.1.4 is published as `artwait.artwait-vscode` (pre-rename); the locally built
 0.1.7 automatic-hook, listing-copy, and featured-work update awaits upload
 from the publisher account. Signing, clean-profile validation, and final real
 Codex acceptance testing remain recommended release work.
