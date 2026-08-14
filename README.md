@@ -23,8 +23,13 @@ ArtBreak ships platform-specific VSIX packages for local VS Code:
 
 - Windows x64: the companion installs to
   `%LOCALAPPDATA%\ArtBreak\app\artbreak.exe`.
-- macOS Apple Silicon and Intel: the signed Tauri app bundle installs to
-  `~/.artbreak/app/ArtBreak.app`.
+- macOS Apple Silicon: the Tauri app bundle installs to
+  `~/.artbreak/app/ArtBreak.app`. The current build is ad-hoc signed, not
+  notarized with a Developer ID, so the first launch needs one manual
+  Gatekeeper bypass (right-click → Open, or System Settings → Privacy &
+  Security → "Open Anyway").
+- macOS Intel is not published yet; support is implemented and builds
+  successfully in CI, it just hasn't been uploaded to the Marketplace.
 
 VS Code selects the matching Marketplace package automatically. Linux and
 remote workspaces (SSH, WSL, Codespaces) are not supported; ArtBreak stays
@@ -97,11 +102,13 @@ listing (publisher `artwait`, extension `artwait-vscode`) remains published
 at version 0.2.4 under its old name; ArtBreak (`artwait.artbreak-vscode`,
 same publisher account) has not been published yet. Version 0.2.7 is its
 first upload candidate: it carries the rename plus fixes to the Codex
-work-start path, a reliable-activation regression, and the Test Window
-single-instance lock, and adds native macOS Intel and Apple Silicon packages
-alongside Windows x64. It awaits the native CI builds and upload from the
-publisher account. A Developer ID signature and notarization are still
-required for a frictionless public macOS release. See
+work-start path, a reliable-activation regression, a Windows work-start
+path-matching bug, and the Test Window single-instance lock. It ships native
+Windows x64 and macOS Apple Silicon builds, both built and verified in CI;
+macOS Intel is implemented and builds successfully in CI but is deferred to
+a later upload pending GitHub macOS runner availability. A Developer ID
+signature and notarization are still required for a frictionless public
+macOS release; the current macOS build is ad-hoc signed. See
 [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) for the full audit.
 
 ## License

@@ -2,6 +2,17 @@
 
 ## 0.2.7
 
+- Fix a Windows work-start bug where a hook's `cwd` using forward slashes
+  failed to match a VS Code lease's backslash-style workspace path, silently
+  dropping the marker and the artwork window on every real Claude Code turn.
+  The path-comparison helper now unifies separators before comparing, like
+  its TypeScript counterpart already did.
+- Ship a native macOS Apple Silicon build for the first time, fixing three
+  bugs along the way that Windows-only testing could not reach: a broken
+  `tauri.conf.json` build-hook path, a bundle identifier ending in `.app`
+  (which Tauri itself warns against), and a companion-install test fixture
+  that assumed every platform's bundled payload is a flat file. macOS Intel
+  is deferred to a later release pending CI runner availability.
 - Rename the product from ArtWait to ArtBreak: extension id, companion
   binary and macOS bundle name, state directory (`~/.artbreak`,
   `%LOCALAPPDATA%\ArtBreak`), commands, and all docs. The hook installer

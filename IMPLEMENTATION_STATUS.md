@@ -1,11 +1,12 @@
 # ArtBreak implementation status
 
-Last audited: 2026-08-12 (Windows `win32-x64`; macOS packaging implementation)
+Last audited: 2026-08-14 (Windows `win32-x64` and macOS `darwin-arm64` built and
+verified in native CI; macOS `darwin-x64` deferred)
 
 ## Current release target
 
-The current target is one platform-specific VS Code Marketplace release: Windows
-x64, macOS Intel, and macOS Apple Silicon. It silently installs the companion
+The 0.2.7 release ships Windows x64 and macOS Apple Silicon; macOS Intel is
+deferred to a later release (see below). It silently installs the companion
 under the user's profile, automatically installs Claude Code and Codex hooks on
 activation, and opens a welcome artwork without depending on an agent hook. No
 API key, server, LLM, or separate installer is required.
@@ -21,9 +22,9 @@ API key, server, LLM, or separate installer is required.
 | Artwork catalog and navigation | Implemented | The bundled catalog contains 5,000 displayable Met paintings and zero `Unknown` artists. It starts at random in 227 official Met `Famous` paintings, with an in-window Explore control for the full painting catalog. Both collections use shuffled deck/history navigation. |
 | Artwork UI | Implemented | Responsive image fit, work/artist/source fields, Famous/Explore controls, The Met link, previous/next navigation, magnifier affordance, continuous pointer-anchored Ctrl/Command zoom, modifier-drag zoom, and direct click-and-drag panning. Wheel/trackpad zoom sensitivity is one third of the previous setting. |
 | Stable companion path and updates | Implemented for Windows and macOS | Windows uses `%LOCALAPPDATA%\ArtBreak\app\artbreak.exe`; macOS installs the complete `~/.artbreak/app/ArtBreak.app` bundle. Both verify the embedded executable hash before a staged, rollback-safe payload swap. |
-| macOS packaging | Implemented; native CI pending | The package script builds a Tauri `ArtBreak.app` bundle only on its native macOS host, signs/verifies it, embeds it in the matching VSIX, and preserves the full bundle when installing. When the configured GitHub Secrets are present, CI imports the Developer ID certificate, notarizes, and staples each bundle. The CI matrix covers `darwin-x64` and `darwin-arm64`. |
+| macOS packaging | Built and verified in native CI for `darwin-arm64`; `darwin-x64` not yet attempted | The package script builds a Tauri `ArtBreak.app` bundle on its native macOS host and embeds it in the matching VSIX. Two real bugs were found and fixed by this first real native-CI run (Windows packaging never exercises this code path, so neither had been caught before): (1) `beforeDevCommand`/`beforeBuildCommand` in `tauri.conf.json` used `../scripts/sync-catalog.mjs`, which Tauri resolves relative to the directory `tauri` is invoked from (`packages/companion/`), not `src-tauri/`; it pointed at a nonexistent path and failed every `tauri build` with `MODULE_NOT_FOUND`. Fixed to `./scripts/sync-catalog.mjs`. (2) The bundle `identifier` was `com.artbreak.app`, which Tauri itself warns against (conflicts with the `.app` bundle extension); changed to `com.artbreak.desktop`. A companion install unit test also had a fixture bug: it wrote a flat file for the bundled payload/manifest on every platform, but `companionLayout('darwin')` expects a nested `ArtBreak.app/Contents/MacOS/artbreak` bundle, so `readBundledManifest()` rejected it as invalid on macOS; the fixture now derives its shape from `companionLayout()` directly. With all three fixed, GitHub Actions run [31762065364](https://github.com/nninnsungkim/ArtBreak/actions/runs/31762065364) built `darwin-arm64` successfully (ad-hoc signed, no Developer ID configured) and uploaded `artbreak-darwin-arm64` (2,771,606 bytes) as a workflow artifact. `darwin-x64` queued for its `macos-13` runner for 15+ minutes without starting (GitHub runner availability, not a code issue) and was not waited on further; since it runs the identical fixed pipeline, it is expected to succeed whenever it gets a runner. |
 | First-run display | Implemented and acceptance-tested | The extension schedules one immediate welcome work on its first activation. It bypasses agent hooks but respects ArtBreak pause state and the normal single-window lock. A clean VS Code profile opened the artwork window automatically. |
-| Windows VSIX | Built and checked | `artbreak-vscode-win32-x64-0.2.7.vsix`, 2,711,443 bytes, SHA-256 `69506f82ea6c9a8dbe2660c3defcb8955ec6d3b0d1c948b4e06097c67083693e`. Its manifest activates with `*`, id `artwait.artbreak-vscode`, and bundles `bin/win32-x64/artbreak.exe`. Packaging also fixed a `.vscodeignore` gap that let a stale `tsc -p ./tsconfig.test.json` output tree (`out/src/**`) leak into earlier local packages; this archive has no such duplicate files (32 files, 2.59 MB unpacked). |
+| Windows VSIX | Built and checked | `artbreak-vscode-win32-x64-0.2.7.vsix`, 2,711,443 bytes, SHA-256 `69506f82ea6c9a8dbe2660c3defcb8955ec6d3b0d1c948b4e06097c67083693e`. Its manifest activates with `*`, id `artwait.artbreak-vscode`, and bundles `bin/win32-x64/artbreak.exe`. Packaging also fixed a `.vscodeignore` gap that let a stale `tsc -p ./tsconfig.test.json` output tree (`out/src/**`) leak into earlier local packages; this archive has no such duplicate files (32 files, 2.59 MB unpacked). CI's own `win32-x64` build from the same commit (run 31762065364) succeeded and uploaded a matching `artbreak-win32-x64` artifact (2,708,222 bytes). |
 
 ## Latest local verification
 
@@ -50,6 +51,8 @@ API key, server, LLM, or separate installer is required.
 - Running-session acceptance: installing 0.2.1 into an already-open, otherwise empty VS Code profile also automatically opened the ArtBreak window, with no reload or terminal action in that profile.
 - Version 0.2.5 passed typecheck, lint, the extension unit suite, companion catalog tests, and all four Rust tests. Its clean-profile Codex run registered `UserPromptSubmit Completed` and `Stop Completed`; the extension installed the stable companion and hooks automatically. Codex work-start now writes its marker synchronously, while the active VS Code extension opens the gated window.
 - Version 0.2.7 passed `tsc --noEmit` for both packages, the extension unit suite (including new `pauseUntilEndOfDay` tests), `cargo check`, and `cargo test` (4 passed). Its packaged VSIX was rebuilt after fixing a `.vscodeignore` gap and verified to contain no stale `out/src/**` duplicate files.
+- A path-separator bug in `platform.rs`'s workspace-matching (missing `/`↔`\` unification, unlike the TypeScript mirror which already normalizes via `path.normalize()`) silently dropped every real Claude Code work-start event on Windows whenever the hook's reported `cwd` used forward slashes. No session marker had ever been created in this app's runtime history under either name (ArtWait or ArtBreak) before this was found and fixed; reproduced directly against the installed binary (forward-slash `cwd` created no marker before the fix, did after) and confirmed end-to-end (marker + visible window) on the live installation.
+- CI's first real native-macOS run (see the macOS packaging row above) found and fixed a broken `tauri.conf.json` hook path, a `.app`-suffixed bundle identifier, and a companion-install test fixture that didn't match the real `.app` bundle layout — three bugs that Windows-only local testing structurally could not have caught, since the Windows packaging path never calls `tauri build` and the test fixture bug only manifests when `companionLayout()` resolves to the macOS shape.
 
 ## Release blockers still open
 
@@ -58,7 +61,7 @@ API key, server, LLM, or separate installer is required.
 3. `artbreak.exe` is not Authenticode-signed or timestamped. Marketplace packaging does not require it, but signing is a recommended Windows-release safeguard before broad distribution.
 4. WebView2 prerequisite/error-path checks remain open.
 5. Codex must trust the newly auto-installed `/hooks` entry once before it can run ArtBreak hooks. The immediate first-run artwork does not depend on this approval; the direct hook path was exercised successfully.
-6. The macOS pipeline currently uses an ad-hoc signature if no `ARTBREAK_MACOS_SIGNING_IDENTITY` is provided. Before a public release, supply a Developer ID Application certificate, notarize both Mac app bundles, and perform a clean-machine launch on Intel and Apple Silicon. Apple requires signing and notarization to avoid Gatekeeper friction for direct macOS distribution.
+6. Product direction for 0.2.7 is to ship Windows and macOS Apple Silicon now with an ad-hoc signature (no `ARTBREAK_MACOS_SIGNING_IDENTITY` configured); macOS Intel (`darwin-x64`) is deferred until its CI runner becomes available. Ad-hoc signing means a first launch on macOS needs one manual Gatekeeper bypass (right-click → Open, or System Settings → Privacy & Security → "Open Anyway"). A Developer ID Application certificate + notarization, which would remove that friction, requires enrolling in the Apple Developer Program ($99/year) and is deferred; the pipeline already supports it (see `.github/workflows/build-vsix.yml`) whenever that's set up.
 7. No automated extension-host, full hook-process, update-rollback, or native UI end-to-end suite exists yet. The current verification is a mix of unit tests and native Windows smoke tests.
 
 ## Plan deviations approved by product direction
@@ -71,8 +74,16 @@ fields, as required.
 
 ## Next release sequence
 
-1. Upload the verified `win32-x64` 0.2.7 VSIX, then verify a Marketplace fresh install against both Claude Code and Codex.
-2. Run the `Build platform VSIX packages` workflow and retrieve `darwin-x64` and `darwin-arm64` artifacts for 0.2.7.
-3. Sign/notarize both macOS bundles with the Developer ID release credential, then upload the two macOS platform packages under version 0.2.7.
-4. Add public repository, privacy, and support URLs; decide whether to sign and timestamp the Windows executable.
-5. Perform clean-profile VS Code, real Claude, and real Codex acceptance tests on Windows and macOS.
+1. Download the `artbreak-win32-x64` and `artbreak-darwin-arm64` artifacts from
+   [run 31762065364](https://github.com/nninnsungkim/ArtBreak/actions/runs/31762065364)
+   and upload both as the win32-x64 and darwin-arm64 platform packages for
+   `artbreak-vscode` 0.2.7 from the Publisher management page.
+2. Verify a Marketplace fresh install against both Claude Code and Codex on
+   Windows, and at least a Test Window launch on Apple Silicon (expect one
+   Gatekeeper bypass on first launch, since the build is ad-hoc signed).
+3. Re-run the `Build platform VSIX packages` workflow later to pick up
+   `darwin-x64` once a `macos-13` runner is actually available, then upload it
+   as a third platform package under the same 0.2.7 version.
+4. Add public repository, privacy, and support URLs; decide whether to sign and
+   timestamp the Windows executable, and whether to pursue Developer ID
+   signing/notarization for macOS.
