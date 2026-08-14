@@ -31,17 +31,23 @@ describe('platform/companion', () => {
         process.env.ARTBREAK_HOME = path.join(root, 'state');
 
         try {
-            const executable = process.platform === 'win32' ? 'artbreak.exe' : 'artbreak';
+            // Use the real layout (a flat file on Windows, a nested
+            // .app/Contents/MacOS bundle on macOS) instead of hand-rolling a
+            // platform check here, so this fixture can't silently drift from
+            // companionLayout() and pass on one platform while being wrong
+            // on the other.
+            const layout = companionLayout();
             const payload = Buffer.from('test companion payload');
             const bundledDirectory = path.join(extensionPath, 'bin', platformTarget());
-            await mkdir(bundledDirectory, { recursive: true });
-            await writeFile(path.join(bundledDirectory, executable), payload);
+            const executablePath = path.join(bundledDirectory, layout.executable);
+            await mkdir(path.dirname(executablePath), { recursive: true });
+            await writeFile(executablePath, payload);
             await writeFile(path.join(bundledDirectory, 'manifest.json'), JSON.stringify({
                 schemaVersion: 1,
                 platform: platformTarget(),
                 version: '0.1.0-test',
-                payload: executable,
-                executable,
+                payload: layout.payload,
+                executable: layout.executable,
                 sha256: createHash('sha256').update(payload).digest('hex')
             }));
 
