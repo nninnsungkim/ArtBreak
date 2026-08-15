@@ -1,6 +1,6 @@
 {
   "name": "artbreak",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "private": true,
   "description": "ArtBreak - Display public-domain paintings while Claude Code or Codex is working",
   "workspaces": [

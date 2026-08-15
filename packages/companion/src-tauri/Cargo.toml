@@ -1,6 +1,6 @@
 [package]
 name = "artbreak"
-version = "0.2.12"
+version = "0.2.13"
 description = "ArtBreak companion desktop application"
 authors = ["ArtBreak Contributors"]
 license = "MIT"
