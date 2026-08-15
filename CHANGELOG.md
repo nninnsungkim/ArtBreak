@@ -2,6 +2,15 @@
 
 ## 0.2.7
 
+- Temporarily publish as displayName "ArtBreak App" instead of "ArtBreak".
+  The Marketplace rejects "ArtBreak" as taken even under the new `artbreak`
+  extension id, almost certainly because deleting the prior
+  `artbreak-vscode` listing left its displayName in a grace-period
+  reservation that a rename of the `name` field doesn't clear (a support
+  request to VSMarketplace@microsoft.com is pending). displayName is safe
+  to change in a later version without creating a new extension identity
+  (`publisher.name` is what's permanent); revert to "ArtBreak" once the
+  reservation clears.
 - Fix a Windows work-start bug where a hook's `cwd` using forward slashes
   failed to match a VS Code lease's backslash-style workspace path, silently
   dropping the marker and the artwork window on every real Claude Code turn.
