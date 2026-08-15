@@ -4,7 +4,7 @@
 use clap::{Parser, Subcommand};
 use chrono::Utc;
 use serde::Deserialize;
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Write};
 use std::process::{Command, Stdio};
 use std::time::Duration;
 use std::fs::OpenOptions;
@@ -85,6 +85,23 @@ struct HookPayload {
     cwd: Option<String>,
 }
 
+/// Diagnostic logging for the work-start pipeline, written to
+/// `<state root>/hook-debug.log`. Every `handle_show` bail-out already had a
+/// `println!`, but the show process is always spawned with stdout nulled, so
+/// none of it was ever visible; this writes to a plain file instead so a
+/// real failure can be inspected after the fact rather than guessed at. Kept
+/// permanently (not just for one investigation) since hook-firing issues are
+/// otherwise silent and this is the only way to see what actually happened.
+fn log_hook_debug(message: &str) {
+    let Ok(paths) = platform::get_state_paths() else { return };
+    let Some(root) = paths.state.parent() else { return };
+    let log_path = root.join("hook-debug.log");
+    let timestamp = Utc::now().to_rfc3339();
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(&log_path) {
+        let _ = writeln!(file, "[{timestamp}] {message}");
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -108,6 +125,7 @@ fn main() {
 fn handle_hook(provider: &str, event: &str) {
     let now = Utc::now();
     let now_ms = now.timestamp_millis();
+    log_hook_debug(&format!("handle_hook called: provider={provider} event={event} cwd={:?}", std::env::current_dir()));
 
     // Codex invokes lifecycle commands without closing, or in some builds
     // without supplying, stdin. A hook must answer before its two-second
@@ -136,15 +154,18 @@ fn handle_hook(provider: &str, event: &str) {
     // Claude delivers one JSON payload on stdin.
     let mut buffer = String::new();
     if let Err(e) = io::stdin().lock().read_line(&mut buffer) {
+        log_hook_debug(&format!("stdin read FAILED: {e}"));
         eprintln!("Failed to read stdin: {}", e);
         print_neutral_output(provider, event);
         return;
     }
+    log_hook_debug(&format!("stdin raw ({} bytes): {}", buffer.len(), buffer.trim()));
 
     // Parse JSON payload
     let payload: HookPayload = match serde_json::from_str(&buffer) {
         Ok(p) => p,
         Err(e) => {
+            log_hook_debug(&format!("JSON parse FAILED: {e}"));
             eprintln!("Failed to parse JSON: {}", e);
             print_neutral_output(provider, event);
             return;
@@ -153,6 +174,10 @@ fn handle_hook(provider: &str, event: &str) {
 
     // Normalize turn_id (use prompt_id for Claude if turn_id not present)
     let turn_id = payload.turn_id.or(payload.prompt_id);
+    log_hook_debug(&format!(
+        "parsed payload: session_id={} turn_id={:?} cwd={:?}",
+        payload.session_id, turn_id, payload.cwd
+    ));
 
     match event {
         "start" => handle_start_event(provider, &payload.session_id, turn_id.as_deref(), payload.cwd.as_deref(), now_ms),
@@ -182,28 +207,49 @@ fn handle_start_event(
 
     // 3. Find matching VS Code lease
     let workspace_path = cwd.unwrap_or(".");
+    let all_leases = lease::read_all_leases();
+    log_hook_debug(&format!(
+        "handle_start_event: workspace_path={workspace_path:?} known_leases={:?}",
+        all_leases.as_ref().map(|leases| leases.iter()
+            .map(|l| format!("{}(roots={:?},remote={:?},fresh={})", l.lease_id, l.workspace_roots, l.remote_name, lease::is_lease_fresh(l, now_ms)))
+            .collect::<Vec<_>>())
+    ));
     match lease::find_matching_lease(workspace_path, now_ms) {
-        Ok(Some(lease)) => lease,
+        Ok(Some(lease)) => {
+            log_hook_debug(&format!("lease matched: {}", lease.lease_id));
+            lease
+        }
         Ok(None) => {
             // No matching lease, don't create marker
+            log_hook_debug("NO matching lease -- bailing out, no marker created");
             return;
         }
-        Err(_) => return,
+        Err(e) => {
+            log_hook_debug(&format!("lease lookup ERROR: {e} -- bailing out"));
+            return;
+        }
     };
 
     // 4. If paused → return neutral (no marker creation)
     if let Ok(true) = pause::is_paused(now_ms) {
+        log_hook_debug("paused -- bailing out, no marker created");
         return;
     }
 
     // 5. Create marker
     if let Err(e) = marker::create_marker(provider, session_id, turn_id, workspace_path, now_ms) {
+        log_hook_debug(&format!("marker creation FAILED: {e}"));
         eprintln!("Failed to create marker: {}", e);
         return;
     }
+    log_hook_debug(&format!(
+        "marker created: key={}",
+        marker::create_marker_key(provider, session_id, turn_id)
+    ));
 
     // 6. If dismissed → return neutral (no UI spawn)
     if let Ok(true) = dismiss::is_dismissed() {
+        log_hook_debug("dismissed -- marker created but not spawning UI");
         return;
     }
 
@@ -212,6 +258,7 @@ fn handle_start_event(
     // marker and launches the same gated UI on its behalf. This avoids making
     // Codex treat a valid start event as a timed-out command hook on Windows.
     if provider != "codex" {
+        log_hook_debug("spawning show process");
         spawn_ui_async(false);
     }
 }
@@ -267,7 +314,10 @@ fn spawn_ui_async(test_mode: bool) {
         if test_mode {
             cmd.arg("--test");
         }
-        let _ = cmd.spawn();
+        match cmd.spawn() {
+            Ok(child) => log_hook_debug(&format!("show process spawned: pid={}", child.id())),
+            Err(e) => log_hook_debug(&format!("show process spawn FAILED: {e}")),
+        }
     }
 
     #[cfg(not(windows))]
@@ -280,7 +330,10 @@ fn spawn_ui_async(test_mode: bool) {
         if test_mode {
             cmd.arg("--test");
         }
-        let _ = cmd.spawn();
+        match cmd.spawn() {
+            Ok(child) => log_hook_debug(&format!("show process spawned: pid={}", child.id())),
+            Err(e) => log_hook_debug(&format!("show process spawn FAILED: {e}")),
+        }
     }
 }
 
@@ -297,10 +350,12 @@ fn print_neutral_output(provider: &str, _event: &str) {
 fn handle_show(test: bool, reason: Option<String>) {
     let now = Utc::now();
     let welcome = reason.as_deref() == Some("welcome");
+    log_hook_debug(&format!("handle_show called: test={test} reason={reason:?}"));
 
     // Check if paused
     if !test {
         if let Ok(true) = pause::is_paused(now.timestamp_millis()) {
+            log_hook_debug("handle_show: paused -- not showing");
             println!("ArtBreak is paused");
             return;
         }
@@ -311,8 +366,10 @@ fn handle_show(test: bool, reason: Option<String>) {
                 Ok(count) => count,
                 Err(_) => 0,
             };
+            log_hook_debug(&format!("handle_show: active_count={active_count}"));
 
             if active_count == 0 {
+                log_hook_debug("handle_show: no active markers -- not showing");
                 println!("No active markers - not showing UI");
                 return;
             }
@@ -323,6 +380,7 @@ fn handle_show(test: bool, reason: Option<String>) {
                     lease::find_matching_lease(&marker.cwd, now.timestamp_millis()).ok().flatten().is_some()
             });
             if !has_fresh_lease {
+                log_hook_debug("handle_show: no matching fresh lease for any active marker -- not showing");
                 println!("No matching fresh VS Code lease - not showing UI");
                 return;
             }
@@ -341,6 +399,7 @@ fn handle_show(test: bool, reason: Option<String>) {
         };
 
         if active_count == 0 {
+            log_hook_debug("handle_show: markers cleared during 2s gate -- not showing");
             println!("Markers cleared during gate - not showing UI");
             return;
         }
@@ -352,9 +411,11 @@ fn handle_show(test: bool, reason: Option<String>) {
     // test) window.
     let ui_lock = acquire_ui_lock();
     if ui_lock.is_none() {
+        log_hook_debug("handle_show: could not acquire ui.lock -- already visible");
         println!("ArtBreak is already visible");
         return;
     }
+    log_hook_debug("handle_show: passed all gates, launching Tauri window now");
 
     println!("Launching UI...");
 

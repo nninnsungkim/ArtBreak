@@ -9,13 +9,21 @@ installer.
 ## Install
 
 1. Install ArtBreak from the VS Code Marketplace (or install the supplied VSIX).
-2. **Claude Code — nothing else to do.** ArtBreak opens a welcome artwork
-   immediately and installs its Claude Code hook automatically. Every later
-   Claude Code turn shows artwork after two seconds of active work.
+2. **Claude Code — use a terminal session, not the built-in chat panel.**
+   ArtBreak installs its Claude Code hook automatically, and it works
+   correctly for a `claude` session running in any real terminal, including
+   VS Code's own integrated terminal — run the **"Claude Code: Open in
+   Terminal"** command (or enable the extension's `claudeCode.useTerminal`
+   setting) instead of the default webview panel. Anthropic's Claude Code VS
+   Code extension does not invoke lifecycle hooks at all for sessions opened
+   in its native webview panel/sidebar, so ArtBreak cannot detect activity
+   there no matter how it's configured; this is a limitation of that
+   integration, not something ArtBreak can work around. The welcome artwork
+   on first install is unaffected either way.
 3. **Codex — one manual step.** ArtBreak installs its Codex hook automatically
    too, but Codex requires you to approve it once: run `/hooks` in Codex and
    trust the ArtBreak entry. Until you do, Codex turns will not show artwork
-   (the welcome artwork and Claude Code integration are unaffected).
+   (the welcome artwork is unaffected).
 
 ## Current support
 

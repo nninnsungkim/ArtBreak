@@ -2,6 +2,16 @@
 
 ## 0.2.7
 
+- Document a Claude Code limitation that made the popup appear to never work:
+  Anthropic's Claude Code VS Code extension does not run lifecycle hooks for
+  a session opened in its native webview chat panel/sidebar, only for a
+  `claude` session run in a real terminal (including VS Code's own
+  integrated terminal via "Claude Code: Open in Terminal"). ArtBreak's hook
+  installation, matching, and display logic all work correctly once that's
+  the case — confirmed end-to-end. Add a permanent `hook-debug.log`
+  diagnostic to `artbreak.exe` so a future "nothing happens" report doesn't
+  require re-deriving this from scratch. See README's Install section for
+  the user-facing guidance.
 - Temporarily publish as displayName "ArtBreak App" instead of "ArtBreak".
   The Marketplace rejects "ArtBreak" as taken even under the new `artbreak`
   extension id, almost certainly because deleting the prior

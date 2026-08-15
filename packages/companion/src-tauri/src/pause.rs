@@ -1,10 +1,31 @@
 /// Pause-state access shared with the VS Code extension.
 
+use chrono::{Local, LocalResult, TimeZone};
 use serde::{Deserialize, Serialize};
 
 use crate::platform::get_state_paths;
 use crate::utils::{atomic_write_json, read_json, safe_unlink};
 use crate::lease::{is_lease_fresh, read_all_leases};
+
+/// Local midnight at the start of the day after `now_ms`. Falls back to a
+/// flat 24 hours if the local calendar date can't be resolved (a DST
+/// transition landing exactly on midnight), rather than failing the pause.
+fn end_of_day_ms(now_ms: i64) -> i64 {
+    let Some(now_local) = Local.timestamp_millis_opt(now_ms).single() else {
+        return now_ms + 24 * 60 * 60 * 1000;
+    };
+    let Some(next_date) = now_local.date_naive().succ_opt() else {
+        return now_ms + 24 * 60 * 60 * 1000;
+    };
+    let Some(next_midnight) = next_date.and_hms_opt(0, 0, 0) else {
+        return now_ms + 24 * 60 * 60 * 1000;
+    };
+    match Local.from_local_datetime(&next_midnight) {
+        LocalResult::Single(dt) => dt.timestamp_millis(),
+        LocalResult::Ambiguous(dt, _) => dt.timestamp_millis(),
+        LocalResult::None => now_ms + 24 * 60 * 60 * 1000,
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
