@@ -11,9 +11,7 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
-    "typecheck": "npm run typecheck --workspaces",
-    "catalog:build": "tsc -p scripts/catalog/tsconfig.json",
-    "catalog:generate": "npm run catalog:build && node dist/catalog/generate.js"
+    "typecheck": "npm run typecheck --workspaces"
   },
   "engines": {
     "node": ">=18.0.0",

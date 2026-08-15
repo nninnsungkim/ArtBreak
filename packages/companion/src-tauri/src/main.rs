@@ -8,6 +8,7 @@ use std::io::{self, BufRead, Write};
 use std::time::Duration;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
+use tauri::Manager;
 
 mod platform;
 mod utils;
@@ -434,6 +435,13 @@ fn handle_show(test: bool, reason: Option<String>) {
         let ui_lock_for_monitor = ui_lock.clone();
         let ui_lock_for_close = ui_lock.clone();
         tauri::Builder::default()
+            .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+                // When a second instance is launched, bring the existing window to front
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_focus();
+                    let _ = window.unminimize();
+                }
+            }))
             .plugin(tauri_plugin_opener::init())
             .invoke_handler(tauri::generate_handler![pause_for_hours])
             .setup(move |app| {

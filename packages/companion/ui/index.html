@@ -4,48 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArtBreak</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
     <link rel="stylesheet" href="styles-v4.css">
 </head>
 <body>
     <main class="container">
+        <div class="pause-control top-right">
+            <button id="pause-toggle-btn" class="pause-icon-button" type="button" aria-expanded="false" aria-controls="pause-menu" aria-label="Pause ArtBreak">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+                    <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+                </svg>
+            </button>
+            <div id="pause-menu" class="pause-menu" role="menu" aria-label="Pause ArtBreak" hidden>
+                <p>Pause for</p>
+                <button type="button" role="menuitem" data-pause-hours="0.5">30 min</button>
+                <button type="button" role="menuitem" data-pause-hours="1">1 hour</button>
+                <button type="button" role="menuitem" data-pause-hours="2">2 hours</button>
+                <button type="button" role="menuitem" data-pause-hours="3">3 hours</button>
+                <button type="button" role="menuitem" data-pause-hours="4">4 hours</button>
+                <button type="button" role="menuitem" data-pause-hours="24">1 day</button>
+            </div>
+        </div>
         <section class="artwork-area" aria-live="polite">
             <div class="artwork-frame">
                 <img id="artwork-image" src="" alt="Loading artwork" role="button" tabindex="0" aria-label="Open enlarged artwork view">
-                <button id="zoom-toggle" class="zoom-icon-button" type="button" aria-label="Enlarge artwork" title="Enlarge artwork">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <circle cx="10.5" cy="10.5" r="5.75"></circle>
-                        <path d="m15 15 5 5"></path>
-                        <path d="M10.5 7.75v5.5M7.75 10.5h5.5"></path>
-                    </svg>
-                </button>
             </div>
+            <button id="zoom-toggle" class="zoom-icon-button" type="button" aria-label="Enlarge artwork" title="Enlarge artwork">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="10.5" cy="10.5" r="5.75"></circle>
+                    <path d="m15 15 5 5"></path>
+                    <path d="M10.5 7.75v5.5M7.75 10.5h5.5"></path>
+                </svg>
+            </button>
         </section>
         <footer class="controls">
-            <button id="prev-btn" class="nav-button" type="button" aria-label="Previous artwork">&larr;</button>
+            <button id="prev-btn" class="nav-button" type="button" aria-label="Previous artwork">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M15 6l-6 6 6 6"></path>
+                </svg>
+            </button>
             <section class="artwork-info" aria-label="Artwork details">
                 <h1 id="artwork-title">Loading artwork&hellip;</h1>
-                <p id="artwork-artist">The Metropolitan Museum of Art</p>
+                <p class="artwork-meta">
+                    <span id="artwork-artist">The Metropolitan Museum of Art</span>
+                    <button id="met-link-btn" class="learn-more-button" type="button">Learn more</button>
+                </p>
                 <div class="artwork-actions">
                     <div class="collection-switch" role="group" aria-label="Artwork collection">
-                        <button id="famous-mode-btn" class="collection-mode-button" type="button" aria-pressed="true" title="The Met's popular and important paintings">Famous</button>
-                        <button id="explore-mode-btn" class="collection-mode-button" type="button" aria-pressed="false" title="Browse the complete painting collection">Explore</button>
-                    </div>
-                    <button id="met-link-btn" class="text-button" type="button">View at The Met</button>
-                    <div class="pause-control">
-                        <button id="pause-toggle-btn" class="text-button" type="button" aria-expanded="false" aria-controls="pause-menu">Pause</button>
-                        <div id="pause-menu" class="pause-menu" role="menu" aria-label="Pause ArtBreak" hidden>
-                            <p>Hide ArtBreak for</p>
-                            <button type="button" role="menuitem" data-pause-hours="0.5">30 min</button>
-                            <button type="button" role="menuitem" data-pause-hours="1">1 hour</button>
-                            <button type="button" role="menuitem" data-pause-hours="2">2 hours</button>
-                            <button type="button" role="menuitem" data-pause-hours="3">3 hours</button>
-                            <button type="button" role="menuitem" data-pause-hours="4">4 hours</button>
-                            <button type="button" role="menuitem" data-pause-hours="24">1 day</button>
-                        </div>
+                        <button id="famous-mode-btn" class="collection-mode-button" type="button" aria-pressed="true" title="Popular masterpieces">Famous</button>
+                        <button id="explore-mode-btn" class="collection-mode-button" type="button" aria-pressed="false" title="Browse all paintings">Explore</button>
                     </div>
                 </div>
             </section>
-            <button id="next-btn" class="nav-button" type="button" aria-label="Next artwork">&rarr;</button>
+            <button id="next-btn" class="nav-button" type="button" aria-label="Next artwork">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M9 6l6 6-6 6"></path>
+                </svg>
+            </button>
         </footer>
     </main>
 

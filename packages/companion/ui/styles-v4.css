@@ -1,6 +1,6 @@
 :root {
     color-scheme: dark;
-    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -24,6 +24,34 @@ button { font: inherit; }
     color: #fff;
 }
 
+.pause-control.top-right {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+}
+
+.pause-control.top-right .pause-icon-button {
+    width: 32px;
+    min-height: 32px;
+    color: #fff;
+    opacity: 0.7;
+}
+
+.pause-control.top-right .pause-icon-button:hover {
+    opacity: 1;
+}
+
+.pause-control.top-right .pause-icon-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.pause-control.top-right .pause-menu {
+    top: calc(100% + 9px);
+    bottom: auto;
+}
+
 .artwork-area {
     display: grid;
     position: relative;
@@ -31,7 +59,7 @@ button { font: inherit; }
     min-width: 0;
     min-height: 0;
     place-items: center;
-    padding: clamp(10px, 1.6vw, 24px);
+    padding: clamp(4px, 0.5vw, 8px);
     overflow: hidden;
 }
 
@@ -62,20 +90,20 @@ button { font: inherit; }
 
 .zoom-icon-button {
     position: absolute;
-    right: clamp(8px, 1.1vw, 16px);
-    bottom: clamp(8px, 1.1vw, 16px);
+    right: 12px;
+    bottom: 12px;
     display: grid;
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
     place-items: center;
     padding: 0;
-    border: 1px solid rgba(255, 255, 255, .48);
+    border: none;
     border-radius: 50%;
     background: rgba(12, 12, 12, .78);
     box-shadow: 0 2px 14px rgba(0, 0, 0, .34);
     color: #fff;
     cursor: zoom-in;
-    opacity: .78;
+    opacity: .68;
     transition: background 140ms ease, opacity 140ms ease, transform 140ms ease;
 }
 
@@ -89,12 +117,10 @@ button { font: inherit; }
     stroke-width: 1.8;
 }
 
-.artwork-frame:hover .zoom-icon-button,
+.zoom-icon-button:hover,
 .zoom-icon-button:focus-visible {
     opacity: 1;
     background: rgba(42, 42, 42, .95);
-    outline: 2px solid #91c8ff;
-    outline-offset: 2px;
 }
 
 .zoom-icon-button:active { transform: scale(.94); }
@@ -105,13 +131,19 @@ button { font: inherit; }
     align-items: center;
     gap: clamp(12px, 2vw, 28px);
     flex: 0 0 auto;
-    min-height: 118px;
-    padding: 13px clamp(16px, 3vw, 36px);
+    min-height: 70px;
+    padding: 8px clamp(16px, 3vw, 36px);
     border-top: 1px solid #292929;
     background: #111;
 }
 
-.nav-button,
+.nav-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
 .zoom-toolbar button {
     border: 1px solid #4a4a4a;
     background: #202020;
@@ -120,15 +152,40 @@ button { font: inherit; }
 }
 
 .nav-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 48px;
     height: 48px;
-    border-radius: 50%;
-    font-size: 25px;
-    line-height: 1;
+    border: none;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    transition: color 140ms ease, transform 140ms ease;
 }
 
-.nav-button:hover, .nav-button:focus-visible,
-.zoom-toolbar button:hover, .zoom-toolbar button:focus-visible {
+.nav-button svg {
+    width: 28px;
+    height: 28px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-button:hover,
+.nav-button:focus-visible {
+    color: #91c8ff;
+    transform: scale(1.15);
+}
+
+.nav-button:active {
+    transform: scale(0.95);
+}
+
+.zoom-toolbar button:hover,
+.zoom-toolbar button:focus-visible {
     background: #333;
     outline: 2px solid #91c8ff;
     outline-offset: 2px;
@@ -140,24 +197,48 @@ button { font: inherit; }
 }
 
 #artwork-title {
-    margin: 0 0 4px;
+    margin: 0 0 3px;
     overflow: hidden;
     color: #fff;
-    font-size: clamp(17px, 1.8vw, 23px);
+    font-size: clamp(14px, 1.8vw, 20px);
     font-weight: 650;
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-#artwork-artist {
+.artwork-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     margin: 0;
+}
+
+#artwork-artist {
     overflow: hidden;
     color: #c8c8c8;
-    font-size: 14px;
+    font-size: 11px;
     line-height: 1.35;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.learn-more-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #91c8ff;
+    cursor: pointer;
+    font-size: 11px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+}
+
+.learn-more-button:hover,
+.learn-more-button:focus-visible {
+    color: #fff;
 }
 
 .artwork-actions {
@@ -165,7 +246,15 @@ button { font: inherit; }
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-top: 7px;
+    margin-top: 5px;
+}
+
+.artwork-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
 }
 
 .collection-switch {
@@ -177,13 +266,13 @@ button { font: inherit; }
 }
 
 .collection-mode-button {
-    min-height: 28px;
-    padding: 4px 9px;
+    min-height: 26px;
+    padding: 3px 9px;
     border: 0;
     background: transparent;
     color: #aaa;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
 }
 
@@ -209,10 +298,10 @@ button { font: inherit; }
 }
 
 .text-button {
-    min-height: 30px;
-    padding: 4px 10px;
+    min-height: 26px;
+    padding: 3px 8px;
     border-radius: 5px;
-    font-size: 12px;
+    font-size: 9px;
     font-weight: 600;
 }
 
@@ -227,6 +316,35 @@ button { font: inherit; }
 
 .text-button:hover,
 .text-button:focus-visible {
+    color: #fff;
+    outline: 2px solid #91c8ff;
+    outline-offset: 2px;
+}
+
+.pause-icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    width: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #b7d8ff;
+    cursor: pointer;
+    transition: background 140ms ease, color 140ms ease;
+}
+
+.pause-icon-button svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+.pause-icon-button:hover,
+.pause-icon-button:focus-visible {
+    background: rgba(145, 200, 255, 0.1);
     color: #fff;
     outline: 2px solid #91c8ff;
     outline-offset: 2px;
@@ -258,17 +376,17 @@ button { font: inherit; }
     grid-column: 1 / -1;
     margin: 0 0 2px;
     color: #c8c8c8;
-    font-size: 12px;
+    font-size: 9px;
 }
 
 .pause-menu button {
-    min-height: 30px;
+    min-height: 28px;
     border: 1px solid #4a4a4a;
     border-radius: 4px;
     background: #292929;
     color: #f4f4f4;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 9px;
 }
 
 .pause-menu button:hover,
@@ -351,10 +469,12 @@ button { font: inherit; }
 }
 
 @media (max-width: 520px) {
-    .controls { min-height: 104px; gap: 12px; padding-inline: 12px; }
-    .nav-button { width: 42px; height: 42px; }
-    #artwork-title { font-size: 16px; }
+    .controls { min-height: 65px; gap: 12px; padding-inline: 12px; }
+    .nav-button { width: 42px; height: 42px; font-size: 28px; }
+    #artwork-title { font-size: 13px; }
     .zoom-toolbar { min-height: 58px; padding-inline: 12px; }
     .zoom-canvas { padding: 16px; }
-    .pause-menu { right: -6px; }
+    .pause-menu { right: 0; }
+    .zoom-icon-button { width: 32px; height: 32px; }
+    .zoom-icon-button svg { width: 18px; height: 18px; }
 }

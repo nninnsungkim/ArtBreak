@@ -109,10 +109,21 @@ fn is_user_prompt(record: &TranscriptRecord) -> bool {
 }
 
 fn is_turn_complete(record: &TranscriptRecord) -> bool {
-    record.record_type == "assistant"
-        && record.message.as_ref().and_then(|message| message.role.as_deref()) == Some("assistant")
-        && record.message.as_ref().and_then(|message| message.stop_reason.as_deref()) == Some("end_turn")
-        && record.session_id.is_some()
+    if record.record_type != "assistant" || record.session_id.is_none() {
+        return false;
+    }
+
+    let Some(message) = record.message.as_ref() else { return false };
+    if message.role.as_deref() != Some("assistant") {
+        return false;
+    }
+
+    // Accept any stop_reason except "tool_use" (which indicates a tool step, not turn completion)
+    match message.stop_reason.as_deref() {
+        Some("tool_use") => false,
+        Some(_) => true,
+        None => false,
+    }
 }
 
 fn belongs_to_workspace(cwd: &str, workspace: &str) -> bool {
@@ -199,5 +210,32 @@ mod tests {
         ).unwrap();
         assert!(!is_turn_complete(&tool_step));
         assert!(!is_user_prompt(&sidechain));
+    }
+
+    #[test]
+    fn detects_all_turn_completion_reasons() {
+        // end_turn - normal completion
+        let end_turn: TranscriptRecord = serde_json::from_str(
+            r#"{"type":"assistant","sessionId":"session","message":{"role":"assistant","stop_reason":"end_turn"}}"#,
+        ).unwrap();
+        assert!(is_turn_complete(&end_turn));
+
+        // max_tokens - reached token limit
+        let max_tokens: TranscriptRecord = serde_json::from_str(
+            r#"{"type":"assistant","sessionId":"session","message":{"role":"assistant","stop_reason":"max_tokens"}}"#,
+        ).unwrap();
+        assert!(is_turn_complete(&max_tokens));
+
+        // stop_sequence - user-defined stop sequence
+        let stop_sequence: TranscriptRecord = serde_json::from_str(
+            r#"{"type":"assistant","sessionId":"session","message":{"role":"assistant","stop_reason":"stop_sequence"}}"#,
+        ).unwrap();
+        assert!(is_turn_complete(&stop_sequence));
+
+        // tool_use should NOT be considered turn completion
+        let tool_use: TranscriptRecord = serde_json::from_str(
+            r#"{"type":"assistant","sessionId":"session","message":{"role":"assistant","stop_reason":"tool_use"}}"#,
+        ).unwrap();
+        assert!(!is_turn_complete(&tool_use));
     }
 }
