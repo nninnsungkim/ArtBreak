@@ -32,23 +32,6 @@ function isPainting(artwork) {
     return classification === 'paintings' || objectName === 'painting';
 }
 
-function artworkFacts(artwork) {
-    return [...new Set([
-        artwork.objectName,
-        artwork.medium,
-        artwork.culture,
-        artwork.period,
-        artwork.classification,
-        artwork.department,
-        ...(artwork.tags || []),
-    ].filter(Boolean))].join(' \u00b7 ');
-}
-
-function setOptionalText(element, value) {
-    element.textContent = value;
-    element.hidden = !value;
-}
-
 let catalog = [];
 let fullCatalog = [];
 let famousObjectIDs = new Set();
@@ -89,6 +72,34 @@ async function openMetObject() {
         await opener.openUrl(url);
     } catch (error) {
         console.error('Failed to open the Met artwork page:', error);
+    }
+}
+
+function setPauseMenuOpen(open) {
+    const toggle = document.getElementById('pause-toggle-btn');
+    const menu = document.getElementById('pause-menu');
+    if (!toggle || !menu) return;
+    menu.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+}
+
+async function pauseArtwork(hours, button) {
+    const invoke = window.__TAURI__?.core?.invoke;
+    if (typeof invoke !== 'function') {
+        console.error('Pause is unavailable in this window.');
+        return;
+    }
+
+    const buttons = [...document.querySelectorAll('[data-pause-hours]')];
+    buttons.forEach(item => { item.disabled = true; });
+    if (button) button.textContent = 'Pausing…';
+
+    try {
+        await invoke('pause_for_hours', { hours });
+    } catch (error) {
+        console.error('Failed to pause ArtBreak:', error);
+        buttons.forEach(item => { item.disabled = false; });
+        if (button) button.textContent = `${hours === 0.5 ? '30 min' : hours === 24 ? '1 day' : `${hours} hour${hours === 1 ? '' : 's'}`}`;
     }
 }
 
@@ -444,14 +455,11 @@ async function updateArtwork() {
 
     const artworkTitle = document.getElementById('artwork-title');
     const artworkArtist = document.getElementById('artwork-artist');
-    const artworkFactsElement = document.getElementById('artwork-facts');
     const artworkImage = document.getElementById('artwork-image');
     const artist = namedArtist(artwork.artist);
 
     artworkTitle.textContent = artwork.title;
     artworkArtist.textContent = `${artist} \u2022 ${artwork.date || 'Undated'}`;
-    setOptionalText(artworkFactsElement, artworkFacts(artwork));
-
     if (artwork.imageUrl === currentImageUrl) return;
     try {
         artworkImage.style.opacity = '0.45';
@@ -485,6 +493,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const exploreModeButton = document.getElementById('explore-mode-btn');
     const artworkImage = document.getElementById('artwork-image');
     const zoomViewport = document.getElementById('zoom-viewport');
+    const pauseToggleButton = document.getElementById('pause-toggle-btn');
+    const pauseMenu = document.getElementById('pause-menu');
 
     try {
         const catalogData = await loadCatalog();
@@ -540,6 +550,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('zoom-toggle').addEventListener('click', () => openZoom());
     document.getElementById('met-link-btn').addEventListener('click', openMetObject);
     document.getElementById('zoom-close-btn').addEventListener('click', closeZoom);
+    pauseToggleButton.addEventListener('click', () => setPauseMenuOpen(pauseMenu.hidden));
+    pauseMenu.addEventListener('click', event => {
+        const button = event.target.closest('[data-pause-hours]');
+        if (!button) return;
+        pauseArtwork(Number(button.dataset.pauseHours), button);
+    });
+    document.addEventListener('pointerdown', event => {
+        if (!pauseMenu.hidden && !event.target.closest('.pause-control')) setPauseMenuOpen(false);
+    });
     window.addEventListener('resize', () => {
         if (isZoomOpen()) resetZoom({ preserveScale: true });
     });
@@ -574,6 +593,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (isZoomOpen()) {
             if (event.key === 'Escape') closeZoom();
+            return;
+        }
+
+        if (event.key === 'Escape' && !pauseMenu.hidden) {
+            setPauseMenuOpen(false);
+            pauseToggleButton.focus();
             return;
         }
 

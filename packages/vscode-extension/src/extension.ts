@@ -10,7 +10,7 @@ import {
 } from './state/pause';
 import { readAllLeases } from './state/lease';
 import { countActiveMarkers, cleanupStaleMarkers } from './state/marker';
-import { removeDismissState } from './state/dismiss';
+import { isDismissActive, removeDismissState } from './state/dismiss';
 import {
     getHookStatus,
     installClaudeHooks,
@@ -18,7 +18,7 @@ import {
     removeClaudeHooks,
     removeCodexHooks
 } from './hooks/installer';
-import { getCompanionPath, installCompanion, showCompanion } from './platform/companion';
+import { getCompanionPath, installCompanion, showCompanion, watchClaude, watchCodexVscode } from './platform/companion';
 
 const WELCOME_ARTWORK_SHOWN_KEY = 'artbreak.welcomeArtworkShown';
 const ACTIVITY_MONITOR_INTERVAL_MS = 350;
@@ -69,6 +69,15 @@ function monitorActiveArtwork(context: vscode.ExtensionContext): vscode.Disposab
                 return;
             }
 
+            // Closing the artwork dismisses it for the rest of this agent
+            // turn. Markers deliberately remain until the agent reports that
+            // it has stopped, so this guard is essential: without it the
+            // monitor would launch a new window every retry interval.
+            if (await isDismissActive()) {
+                nextShowEligibleAt = 0;
+                return;
+            }
+
             if (Date.now() < nextShowEligibleAt) return;
 
             // A show process waits for the normal two-second gate and then
@@ -111,6 +120,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Start lease
     await startLease();
+
+    // Codex's VS Code extension owns the app-server transport. The companion
+    // watches its local lifecycle diagnostics read-only and only reacts to
+    // turn/started and turn/completed for this workspace.
+    const workspaceRoots = vscode.workspace.workspaceFolders?.map(folder => folder.uri.fsPath) ?? [];
+    watchCodexVscode(context.extensionPath, workspaceRoots);
+    watchClaude(context.extensionPath, workspaceRoots);
 
     const welcomeArtwork = scheduleWelcomeArtwork(context);
     const activeArtworkMonitor = monitorActiveArtwork(context);

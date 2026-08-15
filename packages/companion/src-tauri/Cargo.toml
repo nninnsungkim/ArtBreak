@@ -1,6 +1,6 @@
 [package]
 name = "artbreak"
-version = "0.2.7"
+version = "0.2.12"
 description = "ArtBreak companion desktop application"
 authors = ["ArtBreak Contributors"]
 license = "MIT"
@@ -22,6 +22,7 @@ dirs = "5.0"
 hex = "0.4"
 tempfile = "3.8"
 tauri-plugin-opener = "2.5.4"
+rusqlite = { version = "0.32", features = ["bundled"] }
 
 [features]
 default = ["custom-protocol"]

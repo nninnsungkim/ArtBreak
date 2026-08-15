@@ -5,13 +5,9 @@ use clap::{Parser, Subcommand};
 use chrono::Utc;
 use serde::Deserialize;
 use std::io::{self, BufRead, Write};
-use std::process::{Command, Stdio};
 use std::time::Duration;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
-
-#[cfg(windows)]
-use std::os::windows::process::CommandExt;
 
 mod platform;
 mod utils;
@@ -19,6 +15,8 @@ mod lease;
 mod marker;
 mod pause;
 mod dismiss;
+mod codex_vscode;
+mod claude;
 
 #[derive(Parser)]
 #[command(name = "artbreak")]
@@ -50,6 +48,18 @@ enum Commands {
     Control {
         #[command(subcommand)]
         action: ControlAction,
+    },
+    /// Watch local Codex VS Code lifecycle events for one workspace.
+    WatchCodexVscode {
+        /// Absolute workspace root owned by this VS Code window.
+        #[arg(long)]
+        workspace: String,
+    },
+    /// Watch local Claude Code terminal and VS Code chat lifecycle events.
+    WatchClaude {
+        /// Absolute workspace root owned by this VS Code window.
+        #[arg(long)]
+        workspace: String,
     },
 }
 
@@ -85,6 +95,21 @@ struct HookPayload {
     cwd: Option<String>,
 }
 
+#[tauri::command]
+fn pause_for_hours(hours: f64, app: tauri::AppHandle) -> Result<(), String> {
+    // The front-end intentionally exposes a short, fixed list rather than a
+    // free-form duration. Validate again here because IPC input is untrusted.
+    if ![0.5, 1.0, 2.0, 3.0, 4.0, 24.0].contains(&hours) {
+        return Err("Unsupported pause duration".to_string());
+    }
+
+    let now_ms = Utc::now().timestamp_millis();
+    pause::write_pause_state(&pause::PauseState::fixed(hours, now_ms))
+        .map_err(|error| format!("Failed to save pause state: {error}"))?;
+    app.exit(0);
+    Ok(())
+}
+
 /// Diagnostic logging for the work-start pipeline, written to
 /// `<state root>/hook-debug.log`. Every `handle_show` bail-out already had a
 /// `println!`, but the show process is always spawned with stdout nulled, so
@@ -114,6 +139,20 @@ fn main() {
         }
         Some(Commands::Control { action }) => {
             handle_control(action);
+        }
+        Some(Commands::WatchCodexVscode { workspace }) => {
+            codex_vscode::watch(&workspace, |session_id, cwd| {
+                handle_start_event("codex-vscode", &session_id, None, Some(&cwd), Utc::now().timestamp_millis());
+            }, |session_id| {
+                handle_stop_event("codex-vscode", &session_id, None, Utc::now().timestamp_millis());
+            });
+        }
+        Some(Commands::WatchClaude { workspace }) => {
+            claude::watch(&workspace, |session_id, cwd| {
+                handle_start_event("claude", &session_id, None, Some(&cwd), Utc::now().timestamp_millis());
+            }, |session_id| {
+                handle_stop_event("claude", &session_id, None, Utc::now().timestamp_millis());
+            });
         }
         None => {
             // No command - default to show mode
@@ -237,14 +276,18 @@ fn handle_start_event(
     }
 
     // 5. Create marker
-    if let Err(e) = marker::create_marker(provider, session_id, turn_id, workspace_path, now_ms) {
+    // Claude's terminal hooks and its VS Code chat transcript identify the
+    // same conversation differently. Keep one marker per Claude session so
+    // the two harmlessly converge instead of producing parallel UI work.
+    let marker_turn_id = if provider == "claude" { None } else { turn_id };
+    if let Err(e) = marker::create_marker(provider, session_id, marker_turn_id, workspace_path, now_ms) {
         log_hook_debug(&format!("marker creation FAILED: {e}"));
         eprintln!("Failed to create marker: {}", e);
         return;
     }
     log_hook_debug(&format!(
         "marker created: key={}",
-        marker::create_marker_key(provider, session_id, turn_id)
+        marker::create_marker_key(provider, session_id, marker_turn_id)
     ));
 
     // 6. If dismissed → return neutral (no UI spawn)
@@ -253,19 +296,15 @@ fn handle_start_event(
         return;
     }
 
-    // 7. Claude starts the detached UI itself. Codex hooks must return as
-    // quickly as possible: the activated VS Code extension observes this
-    // marker and launches the same gated UI on its behalf. This avoids making
-    // Codex treat a valid start event as a timed-out command hook on Windows.
-    if provider != "codex" {
-        log_hook_debug("spawning show process");
-        spawn_ui_async(false);
-    }
+    // 7. The activated VS Code extension is the only UI launcher. Terminal
+    // hooks and both IDE transcript watchers only write markers, so one AI
+    // turn cannot race multiple detached processes into separate windows.
 }
 
 fn handle_stop_event(provider: &str, session_id: &str, turn_id: Option<&str>, now_ms: i64) {
     // 1. Remove marker
-    let _ = marker::remove_marker(provider, session_id, turn_id);
+    let marker_turn_id = if provider == "claude" { None } else { turn_id };
+    let _ = marker::remove_marker(provider, session_id, marker_turn_id);
 
     // 2. If count becomes 0 → remove dismiss state
     if let Ok(0) = marker::count_active_markers(now_ms) {
@@ -285,55 +324,6 @@ fn handle_session_end_event(provider: &str, session_id: &str, now_ms: i64) {
     // 2. If count becomes 0 → remove dismiss state
     if let Ok(0) = marker::count_active_markers(now_ms) {
         let _ = dismiss::remove_dismiss_state();
-    }
-}
-
-fn spawn_ui_async(test_mode: bool) {
-    // The executable is bundled inside the VSIX, so reuse this process's
-    // location instead of requiring a separate companion installation path.
-    let exe_path = match std::env::current_exe() {
-        Ok(path) => path,
-        Err(_) => return,
-    };
-
-    // A Claude hook owns stdin/stdout/stderr pipes. The visible UI must not
-    // inherit those handles: keeping them open makes Claude wait for the UI
-    // process instead of receiving the hook's immediate neutral response.
-    #[cfg(windows)]
-    {
-        // The hook process can own a console and pipes that must be released
-        // immediately. Launch the UI directly instead of invoking a command
-        // shell, and suppress console creation for the show process.
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        let mut cmd = Command::new(&exe_path);
-        cmd.arg("show")
-            .creation_flags(CREATE_NO_WINDOW)
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null());
-        if test_mode {
-            cmd.arg("--test");
-        }
-        match cmd.spawn() {
-            Ok(child) => log_hook_debug(&format!("show process spawned: pid={}", child.id())),
-            Err(e) => log_hook_debug(&format!("show process spawn FAILED: {e}")),
-        }
-    }
-
-    #[cfg(not(windows))]
-    {
-        let mut cmd = Command::new(exe_path);
-        cmd.arg("show")
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null());
-        if test_mode {
-            cmd.arg("--test");
-        }
-        match cmd.spawn() {
-            Ok(child) => log_hook_debug(&format!("show process spawned: pid={}", child.id())),
-            Err(e) => log_hook_debug(&format!("show process spawn FAILED: {e}")),
-        }
     }
 }
 
@@ -357,6 +347,16 @@ fn handle_show(test: bool, reason: Option<String>) {
         if let Ok(true) = pause::is_paused(now.timestamp_millis()) {
             log_hook_debug("handle_show: paused -- not showing");
             println!("ArtBreak is paused");
+            return;
+        }
+
+        // A closed artwork stays closed until the current agent turn ends.
+        // The VS Code activity monitor and any previously spawned show
+        // process can both reach this command, so retain this native guard as
+        // the final source of truth as well.
+        if !welcome && dismiss::is_dismissed().unwrap_or(false) {
+            log_hook_debug("handle_show: dismissed -- not showing");
+            println!("ArtBreak is dismissed until the agent stops");
             return;
         }
 
@@ -403,6 +403,15 @@ fn handle_show(test: bool, reason: Option<String>) {
             println!("Markers cleared during gate - not showing UI");
             return;
         }
+
+        // The user may have closed the window while this process was waiting
+        // through the gate. Re-check immediately before taking the UI lock so
+        // that a queued show can never reopen a dismissed artwork.
+        if dismiss::is_dismissed().unwrap_or(false) {
+            log_hook_debug("handle_show: dismissed during 2s gate -- not showing");
+            println!("ArtBreak was dismissed during gate");
+            return;
+        }
     }
 
     // The single-instance lock applies even in test mode: only the gate and
@@ -426,6 +435,7 @@ fn handle_show(test: bool, reason: Option<String>) {
         let ui_lock_for_close = ui_lock.clone();
         tauri::Builder::default()
             .plugin(tauri_plugin_opener::init())
+            .invoke_handler(tauri::generate_handler![pause_for_hours])
             .setup(move |app| {
                 if !test && !welcome {
                     let app_handle = app.handle().clone();

@@ -25,13 +25,24 @@
             <section class="artwork-info" aria-label="Artwork details">
                 <h1 id="artwork-title">Loading artwork&hellip;</h1>
                 <p id="artwork-artist">The Metropolitan Museum of Art</p>
-                <p id="artwork-facts" hidden></p>
                 <div class="artwork-actions">
                     <div class="collection-switch" role="group" aria-label="Artwork collection">
                         <button id="famous-mode-btn" class="collection-mode-button" type="button" aria-pressed="true" title="The Met's popular and important paintings">Famous</button>
                         <button id="explore-mode-btn" class="collection-mode-button" type="button" aria-pressed="false" title="Browse the complete painting collection">Explore</button>
                     </div>
                     <button id="met-link-btn" class="text-button" type="button">View at The Met</button>
+                    <div class="pause-control">
+                        <button id="pause-toggle-btn" class="text-button" type="button" aria-expanded="false" aria-controls="pause-menu">Pause</button>
+                        <div id="pause-menu" class="pause-menu" role="menu" aria-label="Pause ArtBreak" hidden>
+                            <p>Hide ArtBreak for</p>
+                            <button type="button" role="menuitem" data-pause-hours="0.5">30 min</button>
+                            <button type="button" role="menuitem" data-pause-hours="1">1 hour</button>
+                            <button type="button" role="menuitem" data-pause-hours="2">2 hours</button>
+                            <button type="button" role="menuitem" data-pause-hours="3">3 hours</button>
+                            <button type="button" role="menuitem" data-pause-hours="4">4 hours</button>
+                            <button type="button" role="menuitem" data-pause-hours="24">1 day</button>
+                        </div>
+                    </div>
                 </div>
             </section>
             <button id="next-btn" class="nav-button" type="button" aria-label="Next artwork">&rarr;</button>

@@ -1,6 +1,6 @@
 {
   "productName": "ArtBreak",
-  "version": "0.2.7",
+  "version": "0.2.12",
   "identifier": "com.artbreak.desktop",
   "build": {
     "beforeDevCommand": "node ./scripts/sync-catalog.mjs",

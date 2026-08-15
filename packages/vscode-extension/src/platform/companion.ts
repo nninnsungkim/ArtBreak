@@ -233,3 +233,41 @@ export function showCompanion(extensionPath: string, test = false, reason?: stri
     });
     child.unref();
 }
+
+/**
+ * Starts a lightweight, read-only watcher for the Codex VS Code extension's
+ * local app-server lifecycle. One watcher is started per workspace root so a
+ * turn can be matched to the VS Code lease that owns that workspace.
+ */
+export function watchCodexVscode(extensionPath: string, workspaceRoots: readonly string[]): void {
+    // A watcher is deliberately long-lived. Run it from this VSIX version's
+    // immutable payload, not the stable installed companion path: Windows
+    // cannot replace an executable while a watcher has it open, which would
+    // otherwise keep future UI updates (such as new controls) pending.
+    const executable = getBundledCompanionPath(extensionPath);
+    for (const workspace of workspaceRoots) {
+        const child = spawn(executable, ['watch-codex-vscode', '--workspace', workspace], {
+            detached: true,
+            stdio: 'ignore',
+            windowsHide: true,
+        });
+        child.unref();
+    }
+}
+
+/**
+ * Observes the local Claude Code transcript stream for this workspace. Claude
+ * Code's terminal and VS Code chat surfaces both append the same lifecycle
+ * records, so one read-only watcher covers both without user configuration.
+ */
+export function watchClaude(extensionPath: string, workspaceRoots: readonly string[]): void {
+    const executable = getBundledCompanionPath(extensionPath);
+    for (const workspace of workspaceRoots) {
+        const child = spawn(executable, ['watch-claude', '--workspace', workspace], {
+            detached: true,
+            stdio: 'ignore',
+            windowsHide: true,
+        });
+        child.unref();
+    }
+}

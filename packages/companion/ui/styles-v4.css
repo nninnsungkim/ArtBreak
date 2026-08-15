@@ -150,8 +150,7 @@ button { font: inherit; }
     white-space: nowrap;
 }
 
-#artwork-artist,
-#artwork-facts {
+#artwork-artist {
     margin: 0;
     overflow: hidden;
     color: #c8c8c8;
@@ -159,12 +158,6 @@ button { font: inherit; }
     line-height: 1.35;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-#artwork-facts {
-    margin-top: 2px;
-    color: #999;
-    font-size: 12px;
 }
 
 .artwork-actions {
@@ -237,6 +230,53 @@ button { font: inherit; }
     color: #fff;
     outline: 2px solid #91c8ff;
     outline-offset: 2px;
+}
+
+.pause-control {
+    position: relative;
+}
+
+.pause-menu {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: calc(100% + 9px);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(84px, 1fr));
+    gap: 5px;
+    width: 190px;
+    padding: 10px;
+    border: 1px solid #454545;
+    border-radius: 7px;
+    background: #202020;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .48);
+}
+
+.pause-menu[hidden] { display: none; }
+
+.pause-menu p {
+    grid-column: 1 / -1;
+    margin: 0 0 2px;
+    color: #c8c8c8;
+    font-size: 12px;
+}
+
+.pause-menu button {
+    min-height: 30px;
+    border: 1px solid #4a4a4a;
+    border-radius: 4px;
+    background: #292929;
+    color: #f4f4f4;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.pause-menu button:hover,
+.pause-menu button:focus-visible {
+    border-color: #7cb6ec;
+    background: #363636;
+    outline: 2px solid #91c8ff;
+    outline-offset: 1px;
 }
 
 .zoom-overlay {
@@ -316,4 +356,5 @@ button { font: inherit; }
     #artwork-title { font-size: 16px; }
     .zoom-toolbar { min-height: 58px; padding-inline: 12px; }
     .zoom-canvas { padding: 16px; }
+    .pause-menu { right: -6px; }
 }

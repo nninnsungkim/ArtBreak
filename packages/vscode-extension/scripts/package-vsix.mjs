@@ -13,6 +13,27 @@ const companionRoot = join(repositoryRoot, 'packages', 'companion', 'src-tauri')
 const companionPackageRoot = join(repositoryRoot, 'packages', 'companion');
 const companionSyncScript = join(repositoryRoot, 'packages', 'companion', 'scripts', 'sync-catalog.mjs');
 
+function readJson(path) {
+    return JSON.parse(readFileSync(path, 'utf8'));
+}
+
+function assertReleaseVersionsMatch() {
+    const extensionVersion = readJson(join(extensionRoot, 'package.json')).version;
+    const cargoVersionMatch = /^version = "([^\"]+)"/m.exec(
+        readFileSync(join(companionRoot, 'Cargo.toml'), 'utf8')
+    );
+    const versions = [
+        ['root package', readJson(join(repositoryRoot, 'package.json')).version],
+        ['companion package', readJson(join(repositoryRoot, 'packages', 'companion', 'package.json')).version],
+        ['Tauri config', readJson(join(companionRoot, 'tauri.conf.json')).version],
+        ['Cargo package', cargoVersionMatch ? cargoVersionMatch[1] : undefined],
+    ];
+    const mismatch = versions.find(([, version]) => version !== extensionVersion);
+    if (mismatch) {
+        throw new Error(`Release version mismatch: extension is ${extensionVersion}, ${mismatch[0]} is ${mismatch[1] ?? 'missing'}`);
+    }
+}
+
 function hostTarget() {
     if (platform() === 'win32') return arch() === 'arm64' ? 'win32-arm64' : 'win32-x64';
     if (platform() === 'darwin') return arch() === 'arm64' ? 'darwin-arm64' : 'darwin-x64';
@@ -23,6 +44,11 @@ const target = process.argv[2] || hostTarget();
 if (target !== hostTarget()) {
     throw new Error(`This script builds native binaries only. Build ${target} in its matching CI runner.`);
 }
+
+// The same source bundle is built on the Windows, Intel macOS, and Apple
+// Silicon macOS GitHub runners. Fail before packaging if one platform would
+// silently receive a companion with an older version.
+assertReleaseVersionsMatch();
 
 const executable = platform() === 'win32' ? 'artbreak.exe' : 'artbreak';
 const isMacOS = platform() === 'darwin';
@@ -129,7 +155,7 @@ if (isMacOS) {
     chmodSync(destinationExecutable, 0o755);
 }
 
-const extensionPackage = JSON.parse(readFileSync(join(extensionRoot, 'package.json'), 'utf8'));
+const extensionPackage = readJson(join(extensionRoot, 'package.json'));
 const manifest = {
     schemaVersion: 1,
     platform: target,
